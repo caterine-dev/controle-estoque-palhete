@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
@@ -59,13 +59,43 @@ class Movimentacao(db.Model):
     usuario = db.relationship('Usuario', backref=db.backref('movimentacoes', lazy=True))
 
 # ==========================================
-# CRIAÇÃO DO BANCO DE DADOS E ROTA INICIAL
+# ROTAS DO SISTEMA
 # ==========================================
 
-# Rota básica só para testar se o servidor está no ar
 @app.route('/')
 def index():
-    return "Sistema de Estoque Palhete - Base de Dados Pronta!"
+    return render_template('index.html')
+
+@app.route('/cadastro-produto', methods=['GET', 'POST'])
+def cadastro_produto():
+    if request.method == 'POST':
+        # Pega as informações que o usuário digitou na tela
+        nome = request.form['nome']
+        estoque_minimo = float(request.form['estoque_minimo'])
+        unidade = request.form['unidade']
+        
+        # Cria o objeto Produto e salva no banco de dados
+        novo_produto = Produto(nome=nome, estoque_minimo=estoque_minimo, unidade_medida=unidade)
+        db.session.add(novo_produto)
+        db.session.commit()
+        
+        # Após salvar, volta para o painel inicial
+        return redirect(url_for('index'))
+    
+    # Se não for POST (se estiver só abrindo a página), mostra a tela
+    return render_template('cadastro_produto.html')
+
+@app.route('/estoque')
+def ver_estoque():
+    # Isso faz o Python ir no banco e pegar TODOS os produtos cadastrados
+    produtos_cadastrados = Produto.query.all()
+    
+    # Manda esses produtos para a nossa nova tela
+    return render_template('estoque.html', produtos=produtos_cadastrados)
+
+# ==========================================
+# INICIALIZAÇÃO DO SERVIDOR
+# ==========================================
 
 if __name__ == '__main__':
     # Este bloco garante que o banco de dados (estoque.db) seja criado 
@@ -73,5 +103,5 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     
-    # Rodando o servidor na porta 5000 (padrão)
-    app.run(debug=True, host='0.0.0.0')
+    # Rodando o servidor na porta 5003
+    app.run(debug=True, host='0.0.0.0', port=5003)

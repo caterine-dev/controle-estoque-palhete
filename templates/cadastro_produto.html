@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="/" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Novo Produto</h2>
+    </div>
+    <p class="text-on-surface-variant font-medium mt-1">Cadastre os ingredientes da pizzaria para o sistema reconhecer.</p>
+</div>
+
+<form method="POST" action="/cadastro-produto" class="flex flex-col gap-5">
+    
+    <div class="flex flex-col gap-2">
+        <label for="nome" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Nome do Produto</label>
+        <input type="text" id="nome" name="nome" required placeholder="Ex: Farinha Tipo 00" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none">
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-2">
+            <label for="unidade" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Unidade</label>
+            <select id="unidade" name="unidade" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none appearance-none">
+                <option value="kg">Quilo (kg)</option>
+                <option value="unidade">Unidade (un)</option>
+                <option value="caixa">Caixa (cx)</option>
+                <option value="litro">Litro (L)</option>
+                <option value="lata">Lata</option>
+            </select>
+        </div>
+        
+        <div class="flex flex-col gap-2">
+            <label for="estoque_minimo" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Mínimo Alerta</label>
+            <input type="number" step="0.1" id="estoque_minimo" name="estoque_minimo" required placeholder="Ex: 5" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none">
+        </div>
+    </div>
+
+    <button type="submit" class="w-full bg-primary text-on-primary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 mt-4 active:scale-95 transition-transform">
+        <span class="material-symbols-outlined">save</span>
+        Salvar no Banco de Dados
+    </button>
+</form>
+{% endblock %}
