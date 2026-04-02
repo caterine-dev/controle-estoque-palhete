@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <h2 class="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Olá, Equipe Palhete</h2>
+    <p class="text-on-surface-variant font-medium mt-1">O estoque está pronto para o turno.</p>
+</div>
+
+<div class="mb-8">
+    <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-4">Alertas Prioritários</h3>
+    
+    <div class="flex flex-col gap-3">
+        <div class="bg-primary-fixed p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-red-100">
+            <div class="bg-primary text-on-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <div>
+                <h4 class="font-bold text-on-primary-fixed-variant text-sm">2 Produtos abaixo do mínimo</h4>
+                <p class="text-xs text-on-primary-fixed-variant opacity-80 mt-1">Farinha Tipo 00 e Tomate Pelati</p>
+            </div>
+        </div>
+
+        <div class="bg-tertiary-fixed p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-orange-100">
+            <div class="bg-tertiary text-on-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined">hourglass_empty</span>
+            </div>
+            <div>
+                <h4 class="font-bold text-on-tertiary-fixed-variant text-sm">1 Produto próximo ao vencimento</h4>
+                <p class="text-xs text-on-tertiary-fixed-variant opacity-80 mt-1">Queijo Gorgonzola (vence amanhã)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-8">
+    <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-4">Gestão Rápida</h3>
+    
+    <div class="grid grid-cols-2 gap-4">
+        <a href="#" class="bg-secondary-container p-5 rounded-3xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform text-on-secondary-container no-underline aspect-square">
+            <span class="material-symbols-outlined text-4xl">move_to_inbox</span>
+            <span class="font-bold text-sm text-center">Entrada de<br>Lote</span>
+        </a>
+        
+        <a href="#" class="bg-primary p-5 rounded-3xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform text-on-primary no-underline aspect-square">
+            <span class="material-symbols-outlined text-4xl">outbox</span>
+            <span class="font-bold text-sm text-center">Retirar<br>Produto</span>
+        </a>
+
+        <a href="#" class="bg-surface-container-high p-5 rounded-3xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform text-on-surface no-underline aspect-square">
+            <span class="material-symbols-outlined text-4xl">history</span>
+            <span class="font-bold text-sm text-center">Estornar /<br>Devolver</span>
+        </a>
+
+        <a href="#" class="bg-surface-container-lowest p-5 rounded-3xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform text-on-surface no-underline aspect-square border border-surface-container-high">
+            <span class="material-symbols-outlined text-4xl">inventory_2</span>
+            <span class="font-bold text-sm text-center">Ver Todo o<br>Estoque</span>
+        </a>
+    </div>
+</div>
+
+<button class="w-full bg-primary text-on-primary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
+    <span class="material-symbols-outlined">add_circle</span>
+    Novo Cadastro de Item
+</button>
+{% endblock %}
