@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 app = Flask(__name__)
@@ -57,7 +57,40 @@ class Movimentacao(db.Model):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    produtos = Produto.query.all()
+    total_itens = len(produtos)
+    
+    # Lógica Inteligente 1: Alertas de Estoque Mínimo
+    produtos_baixo_estoque = []
+    for produto in produtos:
+        # Soma a quantidade de todos os lotes deste produto
+        total_estoque = sum(lote.quantidade_atual for lote in produto.lotes if lote.quantidade_atual > 0)
+        
+        # Só alerta se o estoque estiver abaixo do mínimo (e ignora se o mínimo for zero)
+        if total_estoque < produto.estoque_minimo and produto.estoque_minimo > 0:
+            produtos_baixo_estoque.append({
+                'nome': produto.nome,
+                'estoque_atual': total_estoque,
+                'minimo': produto.estoque_minimo,
+                'unidade': produto.unidade_medida
+            })
+            
+    # Lógica Inteligente 2: Alertas de Vencimento (Próximos 7 dias ou já vencidos)
+    hoje = datetime.now().date()
+    limite_validade = hoje + timedelta(days=7)
+    
+    lotes_vencendo = LoteEstoque.query.filter(
+        LoteEstoque.quantidade_atual > 0,
+        LoteEstoque.data_validade <= limite_validade
+    ).order_by(LoteEstoque.data_validade).all()
+    
+    total_alertas = len(produtos_baixo_estoque) + len(lotes_vencendo)
+    
+    return render_template('index.html', 
+                           total_itens=total_itens, 
+                           produtos_baixo_estoque=produtos_baixo_estoque,
+                           lotes_vencendo=lotes_vencendo,
+                           total_alertas=total_alertas)
 
 @app.route('/cadastro-produto', methods=['GET', 'POST'])
 def cadastro_produto():
@@ -106,14 +139,12 @@ def retirar_produto():
         produto_id = request.form['produto_id']
         quantidade_retirar = float(request.form['quantidade'])
         
-        # Inteligência PEPS: Busca os lotes que ainda tem produto, ordenando pela validade mais próxima
         lotes_disponiveis = LoteEstoque.query.filter_by(produto_id=produto_id)\
                                              .filter(LoteEstoque.quantidade_atual > 0)\
                                              .order_by(LoteEstoque.data_validade).all()
         
         quantidade_restante = quantidade_retirar
         
-        # Vai descontando dos lotes mais velhos primeiro
         for lote in lotes_disponiveis:
             if quantidade_restante <= 0:
                 break

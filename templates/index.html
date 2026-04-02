@@ -6,29 +6,67 @@
     <p class="text-on-surface-variant font-medium mt-1">O estoque está pronto para o turno.</p>
 </div>
 
+<div class="grid grid-cols-2 gap-4 mb-8">
+    <div class="bg-surface-container-highest p-5 rounded-3xl flex flex-col justify-center shadow-sm">
+        <span class="text-4xl font-extrabold text-on-surface">{{ total_itens }}</span>
+        <span class="text-sm font-bold text-on-surface-variant uppercase tracking-wider mt-1">Itens Cadastrados</span>
+    </div>
+    <div class="bg-surface-container-highest p-5 rounded-3xl flex flex-col justify-center shadow-sm relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 opacity-10">
+            <span class="material-symbols-outlined text-8xl">warning</span>
+        </div>
+        <span class="text-4xl font-extrabold {% if total_alertas > 0 %}text-primary{% else %}text-secondary{% endif %}">{{ total_alertas }}</span>
+        <span class="text-sm font-bold text-on-surface-variant uppercase tracking-wider mt-1">Alertas Ativos</span>
+    </div>
+</div>
+
 <div class="mb-8">
     <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-4">Alertas Prioritários</h3>
     
     <div class="flex flex-col gap-3">
-        <div class="bg-primary-fixed p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-red-100">
-            <div class="bg-primary text-on-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined">warning</span>
+        {% if total_alertas == 0 %}
+            <div class="bg-secondary-container p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+                <div class="bg-secondary text-on-secondary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-on-secondary-container text-sm">Tudo sob controle!</h4>
+                    <p class="text-xs text-on-secondary-container opacity-80 mt-1">Nenhum alerta crítico no momento.</p>
+                </div>
             </div>
-            <div>
-                <h4 class="font-bold text-on-primary-fixed-variant text-sm">2 Produtos abaixo do mínimo</h4>
-                <p class="text-xs text-on-primary-fixed-variant opacity-80 mt-1">Farinha Tipo 00 e Tomate Pelati</p>
-            </div>
-        </div>
+        {% endif %}
 
-        <div class="bg-tertiary-fixed p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-orange-100">
-            <div class="bg-tertiary text-on-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined">hourglass_empty</span>
+        {% if produtos_baixo_estoque %}
+            <div class="bg-primary-fixed p-4 rounded-2xl flex items-start gap-4 shadow-sm border border-red-100">
+                <div class="bg-primary text-on-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined">warning</span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-on-primary-fixed-variant text-sm">{{ produtos_baixo_estoque|length }} Produtos com Estoque Baixo</h4>
+                    <p class="text-xs text-on-primary-fixed-variant opacity-80 mt-1">
+                        {% for p in produtos_baixo_estoque %}
+                            {{ p.nome }} (Tem {{ p.estoque_atual }}{{ p.unidade }}. Mín: {{ p.minimo }}{{ p.unidade }}){% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
             </div>
-            <div>
-                <h4 class="font-bold text-on-tertiary-fixed-variant text-sm">1 Produto próximo ao vencimento</h4>
-                <p class="text-xs text-on-tertiary-fixed-variant opacity-80 mt-1">Queijo Gorgonzola (vence amanhã)</p>
+        {% endif %}
+
+        {% if lotes_vencendo %}
+            <div class="bg-tertiary-fixed p-4 rounded-2xl flex items-start gap-4 shadow-sm border border-orange-100">
+                <div class="bg-tertiary text-on-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined">hourglass_empty</span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-on-tertiary-fixed-variant text-sm">{{ lotes_vencendo|length }} Lotes próximos ao vencimento</h4>
+                    <p class="text-xs text-on-tertiary-fixed-variant opacity-80 mt-1">
+                        {% for lote in lotes_vencendo %}
+                            {{ lote.produto.nome }} (Vence dia {{ lote.data_validade.strftime('%d/%m') }}){% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
             </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 
