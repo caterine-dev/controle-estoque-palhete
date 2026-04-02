@@ -69,8 +69,8 @@ def cadastro_produto():
         novo_produto = Produto(nome=nome, estoque_minimo=estoque_minimo, unidade_medida=unidade)
         db.session.add(novo_produto)
         db.session.commit()
-        
         return redirect(url_for('index'))
+    
     return render_template('cadastro_produto.html')
 
 @app.route('/estoque')
@@ -85,7 +85,6 @@ def entrada_lote():
         quantidade = float(request.form['quantidade'])
         data_validade_str = request.form['data_validade']
         
-        # Converte a data que vem do HTML (String) para o formato Date do Python
         data_validade = datetime.strptime(data_validade_str, '%Y-%m-%d').date()
         
         novo_lote = LoteEstoque(
@@ -96,12 +95,41 @@ def entrada_lote():
         )
         db.session.add(novo_lote)
         db.session.commit()
-        
         return redirect(url_for('index'))
     
-    # Se for GET, busca os produtos para mostrar na lista suspensa
     produtos_cadastrados = Produto.query.all()
     return render_template('entrada_lote.html', produtos=produtos_cadastrados)
+
+@app.route('/retirar-produto', methods=['GET', 'POST'])
+def retirar_produto():
+    if request.method == 'POST':
+        produto_id = request.form['produto_id']
+        quantidade_retirar = float(request.form['quantidade'])
+        
+        # Inteligência PEPS: Busca os lotes que ainda tem produto, ordenando pela validade mais próxima
+        lotes_disponiveis = LoteEstoque.query.filter_by(produto_id=produto_id)\
+                                             .filter(LoteEstoque.quantidade_atual > 0)\
+                                             .order_by(LoteEstoque.data_validade).all()
+        
+        quantidade_restante = quantidade_retirar
+        
+        # Vai descontando dos lotes mais velhos primeiro
+        for lote in lotes_disponiveis:
+            if quantidade_restante <= 0:
+                break
+                
+            if lote.quantidade_atual >= quantidade_restante:
+                lote.quantidade_atual -= quantidade_restante
+                quantidade_restante = 0
+            else:
+                quantidade_restante -= lote.quantidade_atual
+                lote.quantidade_atual = 0
+                
+        db.session.commit()
+        return redirect(url_for('index'))
+        
+    produtos_cadastrados = Produto.query.all()
+    return render_template('retirar_produto.html', produtos=produtos_cadastrados)
 
 # ==========================================
 # INICIALIZAÇÃO DO SERVIDOR

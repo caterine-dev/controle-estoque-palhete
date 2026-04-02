@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="/" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Uso na Cozinha</h2>
+    </div>
+    <p class="text-on-surface-variant font-medium mt-1">Registre a saída de ingredientes para manter o estoque atualizado.</p>
+</div>
+
+<div class="bg-tertiary-fixed p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-orange-100 mb-6">
+    <div class="text-tertiary-container shrink-0">
+        <span class="material-symbols-outlined text-3xl">info</span>
+    </div>
+    <div>
+        <h4 class="font-bold text-on-tertiary-fixed-variant text-sm">Dica do Pizzaiolo</h4>
+        <p class="text-xs text-on-tertiary-fixed-variant opacity-90 mt-1">Sempre pegue as caixas/embalagens com a validade mais próxima de vencer na prateleira.</p>
+    </div>
+</div>
+
+<form method="POST" action="/retirar-produto" class="flex flex-col gap-6">
+    
+    <div class="flex flex-col gap-2">
+        <label for="produto_id" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Ingrediente Utilizado</label>
+        <select id="produto_id" name="produto_id" required class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none appearance-none">
+            <option value="" disabled selected>Selecione o que vai usar...</option>
+            {% for produto in produtos %}
+                <option value="{{ produto.id }}">{{ produto.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="flex flex-col gap-2">
+        <label for="quantidade" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Quantidade Retirada</label>
+        <input type="number" step="0.1" id="quantidade" name="quantidade" required placeholder="Ex: 1.5" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none text-center text-2xl font-bold">
+    </div>
+
+    <div class="flex flex-col gap-3">
+        <label class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Destino do Uso</label>
+        
+        <label class="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between border border-transparent has-[:checked]:bg-secondary-container has-[:checked]:border-secondary cursor-pointer transition-all">
+            <div class="flex items-center gap-3">
+                <div class="bg-secondary text-on-secondary w-10 h-10 rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined">restaurant</span>
+                </div>
+                <span class="font-bold text-on-surface">Produção do Dia</span>
+            </div>
+            <input type="radio" name="destino" value="producao" checked class="w-5 h-5 text-secondary focus:ring-secondary">
+        </label>
+
+        <label class="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between border border-transparent has-[:checked]:bg-primary-fixed has-[:checked]:border-primary cursor-pointer transition-all">
+            <div class="flex items-center gap-3">
+                <div class="bg-primary text-on-primary w-10 h-10 rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined">delete</span>
+                </div>
+                <span class="font-bold text-on-surface">Desperdício / Avaria</span>
+            </div>
+            <input type="radio" name="destino" value="avaria" class="w-5 h-5 text-primary focus:ring-primary">
+        </label>
+    </div>
+
+    <button type="submit" class="w-full bg-primary text-on-primary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 mt-4 active:scale-95 transition-transform">
+        <span class="material-symbols-outlined">outbox</span>
+        Confirmar Retirada
+    </button>
+</form>
+{% endblock %}
