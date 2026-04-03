@@ -80,7 +80,7 @@ def logout():
     return redirect(url_for('login'))
 
 # ==========================================
-# GESTÃO DE EQUIPA (NOVO!)
+# GESTÃO DE EQUIPA
 # ==========================================
 
 @app.route('/gerenciar-equipe')
@@ -91,24 +91,16 @@ def gerenciar_equipe():
 @app.route('/adicionar-usuario', methods=['GET', 'POST'])
 def adicionar_usuario():
     if request.method == 'POST':
-        nome = request.form['nome']
-        pin = request.form['pin']
-        novo_usuario = Usuario(nome=nome, pin_acesso=pin)
-        db.session.add(novo_usuario)
+        db.session.add(Usuario(nome=request.form['nome'], pin_acesso=request.form['pin']))
         db.session.commit()
         return redirect(url_for('gerenciar_equipe'))
     return render_template('adicionar_usuario.html')
 
 @app.route('/excluir-usuario/<int:id>', methods=['POST'])
 def excluir_usuario(id):
-    # Impedir que o usuário logado se exclua a si próprio
     if id == session['usuario_id']:
         return redirect(url_for('gerenciar_equipe'))
-    
     usuario = Usuario.query.get_or_404(id)
-    # Se o usuário tiver movimentações, elas ficam "órfãs" ou bloqueiam a exclusão dependendo da lógica.
-    # Para simplificar, vamos apenas desvincular as movimentações (set usuario_id to a system id) ou avisar.
-    # Aqui vamos apenas apagar o usuário (CUIDADO: isso pode dar erro se houver FK restrita)
     db.session.delete(usuario)
     db.session.commit()
     return redirect(url_for('gerenciar_equipe'))
@@ -216,6 +208,29 @@ def vincular_codigo():
 @app.route('/perfil')
 def perfil():
     return render_template('perfil.html', usuario=Usuario.query.get(session['usuario_id']))
+
+# ROTA DE RELATÓRIOS INTELIGENTES (NOVO!)
+@app.route('/relatorios')
+def relatorios():
+    # Pega as saídas dos últimos 30 dias
+    trinta_dias_atras = datetime.now() - timedelta(days=30)
+    saidas = Movimentacao.query.filter(
+        Movimentacao.tipo_movimentacao == 'Saída',
+        Movimentacao.data_hora >= trinta_dias_atras
+    ).all()
+
+    # Dicionário para somar tudo que saiu de cada produto
+    consumo = {}
+    for mov in saidas:
+        p = mov.lote.produto
+        if p.id not in consumo:
+            consumo[p.id] = {'nome': p.nome, 'unidade': p.unidade_medida, 'total': 0}
+        consumo[p.id]['total'] += mov.quantidade
+
+    # Ordena do maior pro menor e pega só os Top 5
+    top_produtos = sorted(consumo.values(), key=lambda x: x['total'], reverse=True)[:5]
+    
+    return render_template('relatorios.html', top_produtos=top_produtos)
 
 if __name__ == '__main__':
     with app.app_context():

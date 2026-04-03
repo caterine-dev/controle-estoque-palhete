@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="/" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline cursor-pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Top Consumo</h2>
+    </div>
+    <p class="text-on-surface-variant font-medium mt-1">Ranking dos 5 ingredientes com maior saída nos últimos 30 dias.</p>
+</div>
+
+<div class="flex flex-col gap-4">
+    {% for item in top_produtos %}
+    <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center gap-4 shadow-sm border border-surface-container-highest relative overflow-hidden">
+        
+        <div class="text-6xl font-black text-surface-container-highest absolute -right-2 -bottom-2 opacity-50 select-none">
+            #{{ loop.index }}
+        </div>
+
+        <div class="bg-tertiary-fixed text-on-tertiary-fixed-variant w-14 h-14 rounded-full flex items-center justify-center shrink-0 font-extrabold text-xl z-10 border-2 border-tertiary">
+            {{ loop.index }}º
+        </div>
+
+        <div class="z-10">
+            <h4 class="font-bold text-on-surface text-lg">{{ item.nome }}</h4>
+            <p class="text-sm text-on-surface-variant mt-1 font-semibold uppercase tracking-wider">
+                Total usado: <span class="text-tertiary font-extrabold text-base">{{ item.total }} {{ item.unidade }}</span>
+            </p>
+        </div>
+    </div>
+    {% else %}
+    <div class="p-8 text-center bg-surface-container-lowest rounded-2xl border border-dashed border-outline">
+        <p class="text-on-surface-variant font-semibold">Ainda não existem dados de saídas suficientes para gerar este relatório.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
