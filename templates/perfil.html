@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <h2 class="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Meu Perfil</h2>
+    <p class="text-on-surface-variant font-medium mt-1">Gerencie suas informações de acesso.</p>
+</div>
+
+<div class="flex flex-col gap-4">
+    <div class="bg-surface-container-lowest p-6 rounded-3xl flex items-center gap-5 shadow-sm border border-surface-container-highest">
+        <div class="bg-primary-fixed text-on-primary-fixed-variant w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold uppercase">
+            {{ usuario.nome[0] }}
+        </div>
+        <div>
+            <h3 class="text-xl font-bold text-on-surface">{{ usuario.nome }}</h3>
+            <p class="text-sm text-on-surface-variant mt-1">PIN de Acesso: <span class="font-bold tracking-widest">****</span></p>
+        </div>
+    </div>
+
+    <div class="mb-4 mt-4">
+        <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-4">Configurações do Sistema</h3>
+        
+        <div class="bg-surface-container-lowest rounded-3xl shadow-sm border border-surface-container-highest overflow-hidden">
+            
+            <a href="#" class="flex items-center justify-between p-5 border-b border-surface-container-highest active:bg-surface-container-low transition-colors no-underline">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-on-surface-variant">lock</span>
+                    <span class="font-semibold text-on-surface text-sm">Alterar PIN</span>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+            </a>
+            
+            <a href="#" class="flex items-center justify-between p-5 border-b border-surface-container-highest active:bg-surface-container-low transition-colors no-underline">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-on-surface-variant">group</span>
+                    <span class="font-semibold text-on-surface text-sm">Gerenciar Equipe</span>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+            </a>
+
+            <a href="#" class="flex items-center justify-between p-5 active:bg-surface-container-low transition-colors no-underline">
+                <div class="flex items-center gap-3 text-primary">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="font-semibold text-sm">Sair do Sistema</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
