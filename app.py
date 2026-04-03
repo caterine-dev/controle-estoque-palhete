@@ -102,7 +102,51 @@ def cadastro_produto():
 @app.route('/estoque')
 def ver_estoque():
     produtos_cadastrados = Produto.query.all()
-    return render_template('estoque.html', produtos=produtos_cadastrados)
+    
+    # Criar uma lista turbinada para a tela, incluindo a soma do estoque atual de cada um
+    produtos_com_saldo = []
+    for p in produtos_cadastrados:
+        saldo_total = sum(lote.quantidade_atual for lote in p.lotes if lote.quantidade_atual > 0)
+        produtos_com_saldo.append({
+            'id': p.id,
+            'nome': p.nome,
+            'unidade': p.unidade_medida,
+            'minimo': p.estoque_minimo,
+            'saldo': saldo_total
+        })
+        
+    return render_template('estoque.html', produtos=produtos_com_saldo)
+
+@app.route('/editar-produto/<int:id>', methods=['GET', 'POST'])
+def editar_produto(id):
+    produto = Produto.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        produto.nome = request.form['nome']
+        produto.estoque_minimo = float(request.form['estoque_minimo'])
+        produto.unidade_medida = request.form['unidade']
+        
+        db.session.commit()
+        return redirect(url_for('ver_estoque'))
+        
+    return render_template('editar_produto.html', produto=produto)
+
+@app.route('/excluir-produto/<int:id>', methods=['POST'])
+def excluir_produto(id):
+    produto = Produto.query.get_or_404(id)
+    
+    # Limpeza de Segurança (Deleta tudo que está ligado a este produto para não quebrar o banco)
+    CodigoBarras.query.filter_by(produto_id=produto.id).delete()
+    
+    lotes = LoteEstoque.query.filter_by(produto_id=produto.id).all()
+    for lote in lotes:
+        Movimentacao.query.filter_by(lote_id=lote.id).delete()
+        db.session.delete(lote)
+        
+    db.session.delete(produto)
+    db.session.commit()
+    
+    return redirect(url_for('ver_estoque'))
 
 @app.route('/entrada-lote', methods=['GET', 'POST'])
 def entrada_lote():
@@ -126,7 +170,6 @@ def entrada_lote():
         return redirect(url_for('index'))
     
     produtos_cadastrados = Produto.query.all()
-    # Cria o dicionário com os códigos para mandar para o HTML
     mapa_codigos = {cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()}
     return render_template('entrada_lote.html', produtos=produtos_cadastrados, mapa_codigos=mapa_codigos)
 
@@ -162,7 +205,6 @@ def retirar_produto():
         return redirect(url_for('index'))
         
     produtos_cadastrados = Produto.query.all()
-    # Cria o dicionário com os códigos para mandar para o HTML
     mapa_codigos = {cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()}
     return render_template('retirar_produto.html', produtos=produtos_cadastrados, mapa_codigos=mapa_codigos)
 
