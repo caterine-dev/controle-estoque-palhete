@@ -11,18 +11,15 @@
     <p class="text-on-surface-variant font-medium mt-1">Ranking dos 5 ingredientes com maior saída nos últimos 30 dias.</p>
 </div>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4 mb-8">
     {% for item in top_produtos %}
     <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center gap-4 shadow-sm border border-surface-container-highest relative overflow-hidden">
-        
         <div class="text-6xl font-black text-surface-container-highest absolute -right-2 -bottom-2 opacity-50 select-none">
             #{{ loop.index }}
         </div>
-
         <div class="bg-tertiary-fixed text-on-tertiary-fixed-variant w-14 h-14 rounded-full flex items-center justify-center shrink-0 font-extrabold text-xl z-10 border-2 border-tertiary">
             {{ loop.index }}º
         </div>
-
         <div class="z-10">
             <h4 class="font-bold text-on-surface text-lg">{{ item.nome }}</h4>
             <p class="text-sm text-on-surface-variant mt-1 font-semibold uppercase tracking-wider">
@@ -35,10 +32,25 @@
         <p class="text-on-surface-variant font-semibold">Ainda não existem dados de saídas suficientes para gerar este relatório.</p>
     </div>
     {% endfor %}
+</div>
 
-    <a href="/baixar-relatorio-csv" class="w-full bg-secondary text-on-secondary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 mt-4 active:scale-95 transition-transform no-underline">
-        <span class="material-symbols-outlined">download</span>
-        Baixar Relatório Completo (CSV)
-    </a>
+<div class="bg-surface-container-low p-5 rounded-3xl border border-surface-container-highest">
+    <h3 class="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Exportar Dados (Excel)</h3>
+    
+    <div class="flex flex-col gap-3">
+        <a href="/baixar-relatorio-csv" class="w-full bg-surface-container-highest text-on-surface p-4 rounded-xl font-bold flex items-center gap-3 active:scale-95 transition-transform no-underline">
+            <div class="bg-tertiary text-on-tertiary w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-sm">trending_up</span>
+            </div>
+            <span>Relatório de Consumo (30 dias)</span>
+        </a>
+        
+        <a href="/baixar-auditoria-csv" class="w-full bg-surface-container-highest text-on-surface p-4 rounded-xl font-bold flex items-center gap-3 active:scale-95 transition-transform no-underline">
+            <div class="bg-primary text-on-primary w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-sm">manage_accounts</span>
+            </div>
+            <span>Auditoria por Colaborador</span>
+        </a>
+    </div>
 </div>
 {% endblock %}

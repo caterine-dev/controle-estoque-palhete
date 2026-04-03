@@ -211,6 +211,10 @@ def vincular_codigo():
 def perfil():
     return render_template('perfil.html', usuario=Usuario.query.get(session['usuario_id']))
 
+# ==========================================
+# RELATÓRIOS
+# ==========================================
+
 @app.route('/relatorios')
 def relatorios():
     trinta_dias_atras = datetime.now() - timedelta(days=30)
@@ -229,7 +233,6 @@ def relatorios():
     top_produtos = sorted(consumo.values(), key=lambda x: x['total'], reverse=True)[:5]
     return render_template('relatorios.html', top_produtos=top_produtos)
 
-# ROTA PARA GERAR O ARQUIVO CSV (NOVO!)
 @app.route('/baixar-relatorio-csv')
 def baixar_relatorio_csv():
     trinta_dias_atras = datetime.now() - timedelta(days=30)
@@ -245,23 +248,51 @@ def baixar_relatorio_csv():
             consumo[p.id] = {'nome': p.nome, 'unidade': p.unidade_medida, 'total': 0}
         consumo[p.id]['total'] += mov.quantidade
 
-    # No CSV vamos mandar todos os produtos que tiveram saída, não só os top 5!
     ranking_completo = sorted(consumo.values(), key=lambda x: x['total'], reverse=True)
 
     si = io.StringIO()
-    cw = csv.writer(si, delimiter=';') # Padrão PT-BR para Excel
+    cw = csv.writer(si, delimiter=';')
     cw.writerow(['Posição', 'Ingrediente', 'Quantidade Consumida', 'Unidade'])
 
     for idx, item in enumerate(ranking_completo, start=1):
         cw.writerow([idx, item['nome'], round(item['total'], 2), item['unidade']])
 
-    # Adiciona o BOM do UTF-8 para o Excel ler acentos perfeitamente
     output = '\ufeff' + si.getvalue()
-
     return Response(
         output,
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=relatorio_consumo_30dias.csv"}
+    )
+
+# ROTA NOVA: BAIXAR AUDITORIA COMPLETA DE USUÁRIOS
+@app.route('/baixar-auditoria-csv')
+def baixar_auditoria_csv():
+    # Pega todas as movimentações do banco, da mais recente para a mais antiga
+    movimentacoes = Movimentacao.query.order_by(Movimentacao.data_hora.desc()).all()
+
+    si = io.StringIO()
+    cw = csv.writer(si, delimiter=';')
+    
+    # Cabeçalho da planilha
+    cw.writerow(['Data e Hora', 'Colaborador', 'Ação', 'Ingrediente', 'Quantidade', 'Unidade'])
+
+    # Preenche as linhas com os dados
+    for mov in movimentacoes:
+        data_formatada = mov.data_hora.strftime('%d/%m/%Y %H:%M')
+        cw.writerow([
+            data_formatada, 
+            mov.usuario.nome, 
+            mov.tipo_movimentacao, 
+            mov.lote.produto.nome, 
+            round(mov.quantidade, 2), 
+            mov.lote.produto.unidade_medida
+        ])
+
+    output = '\ufeff' + si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=auditoria_movimentacoes.csv"}
     )
 
 if __name__ == '__main__':
