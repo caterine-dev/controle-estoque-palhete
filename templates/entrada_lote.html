@@ -8,29 +8,38 @@
         </a>
         <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Entrada de Lote</h2>
     </div>
-    <p class="text-on-surface-variant font-medium mt-1">Registre a chegada de novos ingredientes para o estoque da pizzaria.</p>
+    <p class="text-on-surface-variant font-medium mt-1">Registre a chegada de novos ingredientes para o estoque.</p>
 </div>
 
 <form method="POST" action="/entrada-lote" class="flex flex-col gap-5">
     
     <div class="flex flex-col gap-2">
-        <label for="produto_id" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Ingrediente</label>
-        <select id="produto_id" name="produto_id" required class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none appearance-none">
-            <option value="" disabled selected>Selecione um ingrediente...</option>
-            {% for produto in produtos %}
-                <option value="{{ produto.id }}">{{ produto.nome }}</option>
-            {% endfor %}
-        </select>
+        <label class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Ingrediente</label>
+        <div class="flex gap-2">
+            <select id="produto_id" name="produto_id" required class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none appearance-none">
+                <option value="" disabled selected>Selecione ou escaneie...</option>
+                {% for produto in produtos %}
+                    <option value="{{ produto.id }}">{{ produto.nome }}</option>
+                {% endfor %}
+            </select>
+            
+            <button type="button" id="btn-camera" class="bg-secondary-container text-on-secondary-container px-5 rounded-2xl flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+                <span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="reader-container" class="w-full rounded-2xl overflow-hidden hidden border-2 border-secondary mt-2 shadow-sm">
+        <div id="reader" class="w-full"></div>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col gap-2">
             <label for="quantidade" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Quantidade</label>
-            <input type="number" step="0.1" id="quantidade" name="quantidade" required placeholder="Ex: 5" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none">
+            <input type="number" step="0.1" id="quantidade" name="quantidade" required placeholder="Ex: 5" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none text-center font-bold text-xl">
         </div>
-        
         <div class="flex flex-col gap-2">
-            <label for="data_validade" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Data de Validade</label>
+            <label for="data_validade" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Validade</label>
             <input type="date" id="data_validade" name="data_validade" required class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none">
         </div>
     </div>
@@ -40,4 +49,45 @@
         Confirmar Entrada
     </button>
 </form>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    const btnCamera = document.getElementById('btn-camera');
+    const readerContainer = document.getElementById('reader-container');
+    const selectProduto = document.getElementById('produto_id');
+    const mapaCodigos = {{ mapa_codigos | tojson }};
+    let html5QrCode;
+
+    btnCamera.addEventListener('click', () => {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => { readerContainer.classList.add('hidden'); });
+            return;
+        }
+
+        readerContainer.classList.remove('hidden');
+        html5QrCode = new Html5Qrcode("reader");
+
+        // Abre a câmera traseira direto sem perguntar
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => {
+                html5QrCode.stop().then(() => {
+                    readerContainer.classList.add('hidden');
+                    const prodId = mapaCodigos[decodedText];
+                    
+                    if (prodId) {
+                        selectProduto.value = prodId;
+                        // Destaca visualmente que achou
+                        selectProduto.classList.add('ring-4', 'ring-green-400');
+                        setTimeout(() => selectProduto.classList.remove('ring-4', 'ring-green-400'), 1500);
+                    } else {
+                        alert("Código não reconhecido. Cadastre-o primeiro em 'Vincular Código'.");
+                    }
+                });
+            },
+            (errorMessage) => { /* Ignora erros de foco para não travar a tela */ }
+        ).catch((err) => { alert("Erro ao abrir câmera. Tente recarregar a página."); });
+    });
+</script>
 {% endblock %}

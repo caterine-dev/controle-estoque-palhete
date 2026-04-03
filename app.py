@@ -60,13 +60,9 @@ def index():
     produtos = Produto.query.all()
     total_itens = len(produtos)
     
-    # Lógica Inteligente 1: Alertas de Estoque Mínimo
     produtos_baixo_estoque = []
     for produto in produtos:
-        # Soma a quantidade de todos os lotes deste produto
         total_estoque = sum(lote.quantidade_atual for lote in produto.lotes if lote.quantidade_atual > 0)
-        
-        # Só alerta se o estoque estiver abaixo do mínimo (e ignora se o mínimo for zero)
         if total_estoque < produto.estoque_minimo and produto.estoque_minimo > 0:
             produtos_baixo_estoque.append({
                 'nome': produto.nome,
@@ -75,10 +71,8 @@ def index():
                 'unidade': produto.unidade_medida
             })
             
-    # Lógica Inteligente 2: Alertas de Vencimento (Próximos 7 dias ou já vencidos)
     hoje = datetime.now().date()
     limite_validade = hoje + timedelta(days=7)
-    
     lotes_vencendo = LoteEstoque.query.filter(
         LoteEstoque.quantidade_atual > 0,
         LoteEstoque.data_validade <= limite_validade
@@ -103,7 +97,6 @@ def cadastro_produto():
         db.session.add(novo_produto)
         db.session.commit()
         return redirect(url_for('index'))
-    
     return render_template('cadastro_produto.html')
 
 @app.route('/estoque')
@@ -116,9 +109,7 @@ def entrada_lote():
     if request.method == 'POST':
         produto_id = request.form['produto_id']
         quantidade = float(request.form['quantidade'])
-        data_validade_str = request.form['data_validade']
-        
-        data_validade = datetime.strptime(data_validade_str, '%Y-%m-%d').date()
+        data_validade = datetime.strptime(request.form['data_validade'], '%Y-%m-%d').date()
         
         novo_lote = LoteEstoque(
             produto_id=produto_id,
@@ -127,11 +118,17 @@ def entrada_lote():
             data_validade=data_validade
         )
         db.session.add(novo_lote)
+        db.session.flush()
+        
+        mov = Movimentacao(lote_id=novo_lote.id, usuario_id=1, tipo_movimentacao='Entrada', quantidade=quantidade)
+        db.session.add(mov)
         db.session.commit()
         return redirect(url_for('index'))
     
     produtos_cadastrados = Produto.query.all()
-    return render_template('entrada_lote.html', produtos=produtos_cadastrados)
+    # Cria o dicionário com os códigos para mandar para o HTML
+    mapa_codigos = {cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()}
+    return render_template('entrada_lote.html', produtos=produtos_cadastrados, mapa_codigos=mapa_codigos)
 
 @app.route('/retirar-produto', methods=['GET', 'POST'])
 def retirar_produto():
@@ -150,17 +147,61 @@ def retirar_produto():
                 break
                 
             if lote.quantidade_atual >= quantidade_restante:
+                qtd_descontada = quantidade_restante
                 lote.quantidade_atual -= quantidade_restante
                 quantidade_restante = 0
             else:
+                qtd_descontada = lote.quantidade_atual
                 quantidade_restante -= lote.quantidade_atual
                 lote.quantidade_atual = 0
+            
+            mov = Movimentacao(lote_id=lote.id, usuario_id=1, tipo_movimentacao='Saída', quantidade=qtd_descontada)
+            db.session.add(mov)
                 
         db.session.commit()
         return redirect(url_for('index'))
         
     produtos_cadastrados = Produto.query.all()
-    return render_template('retirar_produto.html', produtos=produtos_cadastrados)
+    # Cria o dicionário com os códigos para mandar para o HTML
+    mapa_codigos = {cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()}
+    return render_template('retirar_produto.html', produtos=produtos_cadastrados, mapa_codigos=mapa_codigos)
+
+@app.route('/historico')
+def historico():
+    movimentacoes = Movimentacao.query.order_by(Movimentacao.data_hora.desc()).limit(50).all()
+    return render_template('historico.html', movimentacoes=movimentacoes)
+
+@app.route('/estornar/<int:id>', methods=['POST'])
+def estornar(id):
+    mov = Movimentacao.query.get_or_404(id)
+    lote = mov.lote
+    if mov.tipo_movimentacao == 'Saída':
+        lote.quantidade_atual += mov.quantidade
+    elif mov.tipo_movimentacao == 'Entrada':
+        lote.quantidade_atual -= mov.quantidade
+        if lote.quantidade_atual < 0:
+            lote.quantidade_atual = 0
+            
+    db.session.delete(mov)
+    db.session.commit()
+    return redirect(url_for('historico'))
+
+@app.route('/vincular-codigo', methods=['GET', 'POST'])
+def vincular_codigo():
+    if request.method == 'POST':
+        produto_id = request.form['produto_id']
+        codigo = request.form['codigo']
+        
+        existe = CodigoBarras.query.filter_by(codigo=codigo).first()
+        if not existe:
+            novo_codigo = CodigoBarras(codigo=codigo, produto_id=produto_id)
+            db.session.add(novo_codigo)
+            db.session.commit()
+            
+        return redirect(url_for('index'))
+        
+    produtos = Produto.query.all()
+    return render_template('vincular_codigo.html', produtos=produtos)
 
 # ==========================================
 # INICIALIZAÇÃO DO SERVIDOR
@@ -169,4 +210,9 @@ def retirar_produto():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5003)
+        if not Usuario.query.first():
+            chef = Usuario(nome="Chef", pin_acesso="1234")
+            db.session.add(chef)
+            db.session.commit()
+            
+    app.run(debug=True, host='0.0.0.0', port=5003, ssl_context='adhoc')

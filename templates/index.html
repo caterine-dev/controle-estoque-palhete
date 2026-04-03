@@ -84,7 +84,7 @@
             <span class="font-bold text-sm text-center">Retirar<br>Produto</span>
         </a>
 
-        <a href="#" class="bg-surface-container-high p-5 rounded-3xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform text-on-surface no-underline aspect-square">
+        <a href="/historico" class="bg-surface-container-high p-5 rounded-3xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform text-on-surface no-underline aspect-square">
             <span class="material-symbols-outlined text-4xl">history</span>
             <span class="font-bold text-sm text-center">Estornar /<br>Devolver</span>
         </a>
@@ -96,8 +96,15 @@
     </div>
 </div>
 
-<a href="/cadastro-produto" class="w-full bg-primary text-on-primary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform no-underline">
-    <span class="material-symbols-outlined">add_circle</span>
-    Novo Cadastro de Item
-</a>
+<div class="grid grid-cols-2 gap-4">
+    <a href="/cadastro-produto" class="bg-primary text-on-primary p-5 rounded-3xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform no-underline">
+        <span class="material-symbols-outlined text-4xl">add_circle</span>
+        <span class="font-bold text-sm text-center">Novo<br>Produto</span>
+    </a>
+    
+    <a href="/vincular-codigo" class="bg-secondary text-on-secondary p-5 rounded-3xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform no-underline">
+        <span class="material-symbols-outlined text-4xl">barcode_scanner</span>
+        <span class="font-bold text-sm text-center">Vincular<br>Código</span>
+    </a>
+</div>
 {% endblock %}

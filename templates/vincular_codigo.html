@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="/" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Vincular Código</h2>
+    </div>
+    <p class="text-on-surface-variant font-medium mt-1">Associe um código de barras a um ingrediente do estoque usando a câmera do seu dispositivo.</p>
+</div>
+
+<form method="POST" action="/vincular-codigo" class="flex flex-col gap-5">
+    
+    <div class="flex flex-col gap-2">
+        <label for="produto_id" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Ingrediente</label>
+        <select id="produto_id" name="produto_id" required class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none appearance-none">
+            <option value="" disabled selected>Selecione a qual produto este código pertence...</option>
+            {% for produto in produtos %}
+                <option value="{{ produto.id }}">{{ produto.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="flex flex-col gap-2">
+        <label for="codigo" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Código Lançado</label>
+        <div class="flex gap-2">
+            <input type="text" id="codigo" name="codigo" required placeholder="Toque na câmera ou digite manualmente..." class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none">
+            
+            <button type="button" id="btn-camera" class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-5 rounded-2xl flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+                <span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="reader" class="w-full rounded-2xl overflow-hidden hidden border-2 border-primary mt-2 shadow-sm"></div>
+
+    <button type="submit" class="w-full bg-secondary text-on-secondary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 mt-4 active:scale-95 transition-transform">
+        <span class="material-symbols-outlined">link</span>
+        Salvar Vínculo
+    </button>
+</form>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+    const btnCamera = document.getElementById('btn-camera');
+    const inputCodigo = document.getElementById('codigo');
+    const readerDiv = document.getElementById('reader');
+    let html5QrcodeScanner = null;
+
+    btnCamera.addEventListener('click', () => {
+        // Se a câmera já estiver ligada, o botão desliga
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+            readerDiv.classList.add('hidden');
+            return;
+        }
+
+        // Mostra o quadro da câmera
+        readerDiv.classList.remove('hidden');
+
+        // Configura o leitor de QR Code / Código de Barras
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 10, 
+            qrbox: {width: 250, height: 150} 
+        }, false);
+
+        // Ação de Sucesso: O que fazer quando ele consegue ler um código
+        html5QrcodeScanner.render(function(decodedText, decodedResult) {
+            // Joga o número lá dentro do campo de texto
+            inputCodigo.value = decodedText;
+            
+            // Fecha a câmera para voltar a tela normal
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+            readerDiv.classList.add('hidden');
+            
+        }, function(error) {
+            // Ignora pequenos erros de leitura de iluminação
+        });
+    });
+</script>
+{% endblock %}

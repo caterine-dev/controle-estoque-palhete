@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="/" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Histórico e Estornos</h2>
+    </div>
+    <p class="text-on-surface-variant font-medium mt-1">Acompanhe as últimas movimentações e desfaça lançamentos incorretos.</p>
+</div>
+
+<div class="flex flex-col gap-4">
+    {% for mov in movimentacoes %}
+    <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center justify-between shadow-sm border border-surface-container-highest">
+        
+        <div class="flex items-center gap-4">
+            <div class="{% if mov.tipo_movimentacao == 'Entrada' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %} w-12 h-12 rounded-full flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined">{% if mov.tipo_movimentacao == 'Entrada' %}move_to_inbox{% else %}outbox{% endif %}</span>
+            </div>
+            
+            <div>
+                <h4 class="font-bold text-on-surface text-md">{{ mov.lote.produto.nome }}</h4>
+                <p class="text-xs text-on-surface-variant mt-1 font-semibold uppercase tracking-wider">
+                    {{ mov.tipo_movimentacao }}: {{ mov.quantidade }} {{ mov.lote.produto.unidade_medida }}
+                </p>
+                <p class="text-[10px] opacity-70 font-bold mt-1">{{ mov.data_hora.strftime('%d/%m/%Y às %H:%M') }}</p>
+            </div>
+        </div>
+        
+        <form action="/estornar/{{ mov.id }}" method="POST" onsubmit="return confirm('Tem certeza que deseja desfazer esta movimentação? O saldo do produto será corrigido automaticamente.');">
+            <button type="submit" class="bg-surface-container-high text-on-surface-variant w-12 h-12 rounded-2xl active:scale-90 transition-transform flex items-center justify-center shadow-sm">
+                <span class="material-symbols-outlined">undo</span>
+            </button>
+        </form>
+
+    </div>
+    {% else %}
+    <div class="p-8 text-center bg-surface-container-lowest rounded-2xl border border-dashed border-outline">
+        <p class="text-on-surface-variant font-semibold">Nenhuma movimentação para exibir.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
