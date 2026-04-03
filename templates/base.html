@@ -38,16 +38,8 @@
 <body class="text-on-surface antialiased min-h-screen relative pb-32">
 
     {% if request.endpoint != 'login' %}
-    <header class="bg-surface sticky top-0 z-10 px-4 py-4 flex items-center justify-between shadow-sm">
-        <div class="flex items-center gap-3">
-            <button class="text-primary active:scale-95 transition-transform flex items-center justify-center">
-                <span class="material-symbols-outlined text-3xl">menu</span>
-            </button>
-            <h1 class="text-xl font-extrabold text-primary tracking-tight">Estoque Palhete</h1>
-        </div>
-        <button class="text-primary active:scale-95 transition-transform flex items-center justify-center">
-            <span class="material-symbols-outlined text-3xl">search</span>
-        </button>
+    <header class="bg-surface sticky top-0 z-10 px-4 py-4 flex items-center justify-center shadow-sm">
+        <h1 class="text-xl font-extrabold text-primary tracking-tight">Estoque Palhete</h1>
     </header>
     {% endif %}
 
