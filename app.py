@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, Response
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 import os
+import csv
+import io
 
 app = Flask(__name__)
 app.secret_key = 'palhete_super_secreta_2026'
@@ -209,17 +211,14 @@ def vincular_codigo():
 def perfil():
     return render_template('perfil.html', usuario=Usuario.query.get(session['usuario_id']))
 
-# ROTA DE RELATÓRIOS INTELIGENTES (NOVO!)
 @app.route('/relatorios')
 def relatorios():
-    # Pega as saídas dos últimos 30 dias
     trinta_dias_atras = datetime.now() - timedelta(days=30)
     saidas = Movimentacao.query.filter(
         Movimentacao.tipo_movimentacao == 'Saída',
         Movimentacao.data_hora >= trinta_dias_atras
     ).all()
 
-    # Dicionário para somar tudo que saiu de cada produto
     consumo = {}
     for mov in saidas:
         p = mov.lote.produto
@@ -227,10 +226,43 @@ def relatorios():
             consumo[p.id] = {'nome': p.nome, 'unidade': p.unidade_medida, 'total': 0}
         consumo[p.id]['total'] += mov.quantidade
 
-    # Ordena do maior pro menor e pega só os Top 5
     top_produtos = sorted(consumo.values(), key=lambda x: x['total'], reverse=True)[:5]
-    
     return render_template('relatorios.html', top_produtos=top_produtos)
+
+# ROTA PARA GERAR O ARQUIVO CSV (NOVO!)
+@app.route('/baixar-relatorio-csv')
+def baixar_relatorio_csv():
+    trinta_dias_atras = datetime.now() - timedelta(days=30)
+    saidas = Movimentacao.query.filter(
+        Movimentacao.tipo_movimentacao == 'Saída',
+        Movimentacao.data_hora >= trinta_dias_atras
+    ).all()
+
+    consumo = {}
+    for mov in saidas:
+        p = mov.lote.produto
+        if p.id not in consumo:
+            consumo[p.id] = {'nome': p.nome, 'unidade': p.unidade_medida, 'total': 0}
+        consumo[p.id]['total'] += mov.quantidade
+
+    # No CSV vamos mandar todos os produtos que tiveram saída, não só os top 5!
+    ranking_completo = sorted(consumo.values(), key=lambda x: x['total'], reverse=True)
+
+    si = io.StringIO()
+    cw = csv.writer(si, delimiter=';') # Padrão PT-BR para Excel
+    cw.writerow(['Posição', 'Ingrediente', 'Quantidade Consumida', 'Unidade'])
+
+    for idx, item in enumerate(ranking_completo, start=1):
+        cw.writerow([idx, item['nome'], round(item['total'], 2), item['unidade']])
+
+    # Adiciona o BOM do UTF-8 para o Excel ler acentos perfeitamente
+    output = '\ufeff' + si.getvalue()
+
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=relatorio_consumo_30dias.csv"}
+    )
 
 if __name__ == '__main__':
     with app.app_context():
