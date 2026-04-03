@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="/perfil" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Equipa Palhete</h2>
+    </div>
+    <p class="text-on-surface-variant font-medium mt-1">Veja quem tem acesso ao sistema de estoque.</p>
+</div>
+
+<div class="flex flex-col gap-4">
+    {% for user in usuarios %}
+    <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center justify-between shadow-sm border border-surface-container-highest">
+        <div class="flex items-center gap-4">
+            <div class="bg-secondary-container text-on-secondary-container w-10 h-10 rounded-full flex items-center justify-center font-bold">
+                {{ user.nome[0] }}
+            </div>
+            <div>
+                <h4 class="font-bold text-on-surface">{{ user.nome }}</h4>
+                <p class="text-xs text-on-surface-variant">PIN: ****</p>
+            </div>
+        </div>
+
+        {% if user.id != session['usuario_id'] %}
+        <form action="/excluir-usuario/{{ user.id }}" method="POST" onsubmit="return confirm('Excluir acesso de {{ user.nome }}?');">
+            <button type="submit" class="text-primary p-2 active:scale-90 transition-transform">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <a href="/adicionar-usuario" class="w-full bg-secondary text-on-secondary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 mt-4 active:scale-95 transition-transform no-underline">
+        <span class="material-symbols-outlined">person_add</span>
+        Adicionar Colaborador
+    </a>
+</div>
+{% endblock %}

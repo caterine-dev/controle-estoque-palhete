@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="/gerenciar-equipe" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Novo Acesso</h2>
+    </div>
+    <p class="text-on-surface-variant font-medium mt-1">Crie um novo utilizador para a equipa da pizzaria.</p>
+</div>
+
+<form method="POST" class="flex flex-col gap-5">
+    <div class="flex flex-col gap-2">
+        <label class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Nome do Colaborador</label>
+        <input type="text" name="nome" required placeholder="Ex: João Silva" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none">
+    </div>
+
+    <div class="flex flex-col gap-2">
+        <label class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">PIN de 4 Dígitos</label>
+        <input type="password" name="pin" pattern="[0-9]*" inputmode="numeric" required placeholder="****" maxlength="4" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none text-center text-2xl tracking-[0.5em]">
+    </div>
+
+    <button type="submit" class="w-full bg-secondary text-on-secondary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 mt-4 active:scale-95 transition-transform">
+        <span class="material-symbols-outlined">person_add</span>
+        Confirmar Cadastro
+    </button>
+</form>
+{% endblock %}

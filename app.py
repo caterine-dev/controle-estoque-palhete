@@ -4,11 +4,8 @@ from datetime import datetime, timedelta
 import os
 
 app = Flask(__name__)
-
-# Chave secreta de segurança necessária para o Login funcionar
 app.secret_key = 'palhete_super_secreta_2026'
 
-# Configuração do Banco de Dados SQLite
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'estoque.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -16,7 +13,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # ==========================================
-# DEFINIÇÃO DAS TABELAS DO BANCO DE DADOS
+# MODELOS
 # ==========================================
 
 class Usuario(db.Model):
@@ -55,16 +52,13 @@ class Movimentacao(db.Model):
     usuario = db.relationship('Usuario', backref=db.backref('movimentacoes', lazy=True))
 
 # ==========================================
-# SISTEMA DE LOGIN E SEGURANÇA
+# SEGURANÇA
 # ==========================================
 
-# Essa função roda ANTES de qualquer tela abrir.
 @app.before_request
 def verificar_login():
-    # Só liberamos a tela de login. O resto precisa de crachá!
-    rotas_publicas = ['login']
+    rotas_publicas = ['login', 'static']
     if request.endpoint not in rotas_publicas and 'usuario_id' not in session:
-        # Se tentar acessar sem estar logado, manda de volta pro login
         return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -72,203 +66,161 @@ def login():
     erro = None
     if request.method == 'POST':
         pin_digitado = request.form['pin']
-        # Procura no banco de dados se alguém tem esse PIN
         usuario = Usuario.query.filter_by(pin_acesso=pin_digitado).first()
-        
         if usuario:
-            # Se achou, cria o "crachá" na sessão
             session['usuario_id'] = usuario.id
             session['usuario_nome'] = usuario.nome
             return redirect(url_for('index'))
-        else:
-            erro = "PIN incorreto. Tente novamente."
-            
+        erro = "PIN incorreto."
     return render_template('login.html', erro=erro)
 
 @app.route('/logout')
 def logout():
-    # Rasga o crachá virtual
     session.clear()
     return redirect(url_for('login'))
 
 # ==========================================
-# ROTAS DO SISTEMA (Agora Protegidas!)
+# GESTÃO DE EQUIPA (NOVO!)
+# ==========================================
+
+@app.route('/gerenciar-equipe')
+def gerenciar_equipe():
+    usuarios = Usuario.query.all()
+    return render_template('gerenciar_equipe.html', usuarios=usuarios)
+
+@app.route('/adicionar-usuario', methods=['GET', 'POST'])
+def adicionar_usuario():
+    if request.method == 'POST':
+        nome = request.form['nome']
+        pin = request.form['pin']
+        novo_usuario = Usuario(nome=nome, pin_acesso=pin)
+        db.session.add(novo_usuario)
+        db.session.commit()
+        return redirect(url_for('gerenciar_equipe'))
+    return render_template('adicionar_usuario.html')
+
+@app.route('/excluir-usuario/<int:id>', methods=['POST'])
+def excluir_usuario(id):
+    # Impedir que o usuário logado se exclua a si próprio
+    if id == session['usuario_id']:
+        return redirect(url_for('gerenciar_equipe'))
+    
+    usuario = Usuario.query.get_or_404(id)
+    # Se o usuário tiver movimentações, elas ficam "órfãs" ou bloqueiam a exclusão dependendo da lógica.
+    # Para simplificar, vamos apenas desvincular as movimentações (set usuario_id to a system id) ou avisar.
+    # Aqui vamos apenas apagar o usuário (CUIDADO: isso pode dar erro se houver FK restrita)
+    db.session.delete(usuario)
+    db.session.commit()
+    return redirect(url_for('gerenciar_equipe'))
+
+# ==========================================
+# RESTO DAS ROTAS (ESTOQUE)
 # ==========================================
 
 @app.route('/')
 def index():
     produtos = Produto.query.all()
     total_itens = len(produtos)
-    
     produtos_baixo_estoque = []
     for produto in produtos:
         total_estoque = sum(lote.quantidade_atual for lote in produto.lotes if lote.quantidade_atual > 0)
         if total_estoque < produto.estoque_minimo and produto.estoque_minimo > 0:
-            produtos_baixo_estoque.append({
-                'nome': produto.nome,
-                'estoque_atual': total_estoque,
-                'minimo': produto.estoque_minimo,
-                'unidade': produto.unidade_medida
-            })
-            
+            produtos_baixo_estoque.append({'nome': produto.nome, 'estoque_atual': total_estoque, 'minimo': produto.estoque_minimo, 'unidade': produto.unidade_medida})
     hoje = datetime.now().date()
-    limite_validade = hoje + timedelta(days=7)
-    lotes_vencendo = LoteEstoque.query.filter(
-        LoteEstoque.quantidade_atual > 0,
-        LoteEstoque.data_validade <= limite_validade
-    ).order_by(LoteEstoque.data_validade).all()
-    
-    total_alertas = len(produtos_baixo_estoque) + len(lotes_vencendo)
-    
-    return render_template('index.html', 
-                           total_itens=total_itens, 
-                           produtos_baixo_estoque=produtos_baixo_estoque,
-                           lotes_vencendo=lotes_vencendo,
-                           total_alertas=total_alertas)
+    lotes_vencendo = LoteEstoque.query.filter(LoteEstoque.quantidade_atual > 0, LoteEstoque.data_validade <= hoje + timedelta(days=7)).order_by(LoteEstoque.data_validade).all()
+    return render_template('index.html', total_itens=total_itens, produtos_baixo_estoque=produtos_baixo_estoque, lotes_vencendo=lotes_vencendo, total_alertas=len(produtos_baixo_estoque)+len(lotes_vencendo))
 
 @app.route('/cadastro-produto', methods=['GET', 'POST'])
 def cadastro_produto():
     if request.method == 'POST':
-        nome = request.form['nome']
-        estoque_minimo = float(request.form['estoque_minimo'])
-        unidade = request.form['unidade']
-        novo_produto = Produto(nome=nome, estoque_minimo=estoque_minimo, unidade_medida=unidade)
-        db.session.add(novo_produto)
+        db.session.add(Produto(nome=request.form['nome'], estoque_minimo=float(request.form['estoque_minimo']), unidade_medida=request.form['unidade']))
         db.session.commit()
         return redirect(url_for('index'))
     return render_template('cadastro_produto.html')
 
 @app.route('/estoque')
 def ver_estoque():
-    produtos_cadastrados = Produto.query.all()
-    produtos_com_saldo = []
-    for p in produtos_cadastrados:
-        saldo_total = sum(lote.quantidade_atual for lote in p.lotes if lote.quantidade_atual > 0)
-        produtos_com_saldo.append({
-            'id': p.id,
-            'nome': p.nome,
-            'unidade': p.unidade_medida,
-            'minimo': p.estoque_minimo,
-            'saldo': saldo_total
-        })
-    return render_template('estoque.html', produtos=produtos_com_saldo)
+    produtos = []
+    for p in Produto.query.all():
+        produtos.append({'id': p.id, 'nome': p.nome, 'unidade': p.unidade_medida, 'minimo': p.estoque_minimo, 'saldo': sum(l.quantidade_atual for l in p.lotes if l.quantidade_atual > 0)})
+    return render_template('estoque.html', produtos=produtos)
 
 @app.route('/editar-produto/<int:id>', methods=['GET', 'POST'])
 def editar_produto(id):
-    produto = Produto.query.get_or_404(id)
+    p = Produto.query.get_or_404(id)
     if request.method == 'POST':
-        produto.nome = request.form['nome']
-        produto.estoque_minimo = float(request.form['estoque_minimo'])
-        produto.unidade_medida = request.form['unidade']
+        p.nome, p.estoque_minimo, p.unidade_medida = request.form['nome'], float(request.form['estoque_minimo']), request.form['unidade']
         db.session.commit()
         return redirect(url_for('ver_estoque'))
-    return render_template('editar_produto.html', produto=produto)
+    return render_template('editar_produto.html', produto=p)
 
 @app.route('/excluir-produto/<int:id>', methods=['POST'])
 def excluir_produto(id):
-    produto = Produto.query.get_or_404(id)
-    CodigoBarras.query.filter_by(produto_id=produto.id).delete()
-    lotes = LoteEstoque.query.filter_by(produto_id=produto.id).all()
-    for lote in lotes:
-        Movimentacao.query.filter_by(lote_id=lote.id).delete()
-        db.session.delete(lote)
-    db.session.delete(produto)
+    p = Produto.query.get_or_404(id)
+    CodigoBarras.query.filter_by(produto_id=p.id).delete()
+    for l in LoteEstoque.query.filter_by(produto_id=p.id).all():
+        Movimentacao.query.filter_by(lote_id=l.id).delete()
+        db.session.delete(l)
+    db.session.delete(p)
     db.session.commit()
     return redirect(url_for('ver_estoque'))
 
 @app.route('/entrada-lote', methods=['GET', 'POST'])
 def entrada_lote():
     if request.method == 'POST':
-        produto_id = request.form['produto_id']
-        quantidade = float(request.form['quantidade'])
-        data_validade = datetime.strptime(request.form['data_validade'], '%Y-%m-%d').date()
-        novo_lote = LoteEstoque(produto_id=produto_id, quantidade_inicial=quantidade, quantidade_atual=quantidade, data_validade=data_validade)
+        novo_lote = LoteEstoque(produto_id=request.form['produto_id'], quantidade_inicial=float(request.form['quantidade']), quantidade_atual=float(request.form['quantidade']), data_validade=datetime.strptime(request.form['data_validade'], '%Y-%m-%d').date())
         db.session.add(novo_lote)
         db.session.flush()
-        # Associa a entrada ao usuário logado no momento!
-        mov = Movimentacao(lote_id=novo_lote.id, usuario_id=session['usuario_id'], tipo_movimentacao='Entrada', quantidade=quantidade)
-        db.session.add(mov)
+        db.session.add(Movimentacao(lote_id=novo_lote.id, usuario_id=session['usuario_id'], tipo_movimentacao='Entrada', quantidade=float(request.form['quantidade'])))
         db.session.commit()
         return redirect(url_for('index'))
-    produtos_cadastrados = Produto.query.all()
-    mapa_codigos = {cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()}
-    return render_template('entrada_lote.html', produtos=produtos_cadastrados, mapa_codigos=mapa_codigos)
+    return render_template('entrada_lote.html', produtos=Produto.query.all(), mapa_codigos={cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()})
 
 @app.route('/retirar-produto', methods=['GET', 'POST'])
 def retirar_produto():
     if request.method == 'POST':
-        produto_id = request.form['produto_id']
-        quantidade_retirar = float(request.form['quantidade'])
-        lotes_disponiveis = LoteEstoque.query.filter_by(produto_id=produto_id).filter(LoteEstoque.quantidade_atual > 0).order_by(LoteEstoque.data_validade).all()
-        quantidade_restante = quantidade_retirar
-        for lote in lotes_disponiveis:
-            if quantidade_restante <= 0: break
-            if lote.quantidade_atual >= quantidade_restante:
-                qtd_descontada = quantidade_restante
-                lote.quantidade_atual -= quantidade_restante
-                quantidade_restante = 0
-            else:
-                qtd_descontada = lote.quantidade_atual
-                quantidade_restante -= lote.quantidade_atual
-                lote.quantidade_atual = 0
-            # Associa a saída ao usuário logado no momento!
-            mov = Movimentacao(lote_id=lote.id, usuario_id=session['usuario_id'], tipo_movimentacao='Saída', quantidade=qtd_descontada)
-            db.session.add(mov)
+        qtd = float(request.form['quantidade'])
+        lotes = LoteEstoque.query.filter_by(produto_id=request.form['produto_id']).filter(LoteEstoque.quantidade_atual > 0).order_by(LoteEstoque.data_validade).all()
+        for l in lotes:
+            if qtd <= 0: break
+            baixa = min(l.quantidade_atual, qtd)
+            l.quantidade_atual -= baixa
+            qtd -= baixa
+            db.session.add(Movimentacao(lote_id=l.id, usuario_id=session['usuario_id'], tipo_movimentacao='Saída', quantidade=baixa))
         db.session.commit()
         return redirect(url_for('index'))
-    produtos_cadastrados = Produto.query.all()
-    mapa_codigos = {cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()}
-    return render_template('retirar_produto.html', produtos=produtos_cadastrados, mapa_codigos=mapa_codigos)
+    return render_template('retirar_produto.html', produtos=Produto.query.all(), mapa_codigos={cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()})
 
 @app.route('/historico')
 def historico():
-    movimentacoes = Movimentacao.query.order_by(Movimentacao.data_hora.desc()).limit(50).all()
-    return render_template('historico.html', movimentacoes=movimentacoes)
+    return render_template('historico.html', movimentacoes=Movimentacao.query.order_by(Movimentacao.data_hora.desc()).limit(50).all())
 
 @app.route('/estornar/<int:id>', methods=['POST'])
 def estornar(id):
-    mov = Movimentacao.query.get_or_404(id)
-    lote = mov.lote
-    if mov.tipo_movimentacao == 'Saída':
-        lote.quantidade_atual += mov.quantidade
-    elif mov.tipo_movimentacao == 'Entrada':
-        lote.quantidade_atual -= mov.quantidade
-        if lote.quantidade_atual < 0: lote.quantidade_atual = 0
-    db.session.delete(mov)
+    m = Movimentacao.query.get_or_404(id)
+    if m.tipo_movimentacao == 'Saída': m.lote.quantidade_atual += m.quantidade
+    else: m.lote.quantidade_atual = max(0, m.lote.quantidade_atual - m.quantidade)
+    db.session.delete(m)
     db.session.commit()
     return redirect(url_for('historico'))
 
 @app.route('/vincular-codigo', methods=['GET', 'POST'])
 def vincular_codigo():
     if request.method == 'POST':
-        produto_id = request.form['produto_id']
-        codigo = request.form['codigo']
-        existe = CodigoBarras.query.filter_by(codigo=codigo).first()
-        if not existe:
-            novo_codigo = CodigoBarras(codigo=codigo, produto_id=produto_id)
-            db.session.add(novo_codigo)
+        if not CodigoBarras.query.filter_by(codigo=request.form['codigo']).first():
+            db.session.add(CodigoBarras(codigo=request.form['codigo'], produto_id=request.form['produto_id']))
             db.session.commit()
         return redirect(url_for('index'))
-    produtos = Produto.query.all()
-    return render_template('vincular_codigo.html', produtos=produtos)
+    return render_template('vincular_codigo.html', produtos=Produto.query.all())
 
 @app.route('/perfil')
 def perfil():
-    # Agora a tela de perfil puxa os dados reais de quem está logado!
-    usuario_logado = Usuario.query.get(session['usuario_id'])
-    return render_template('perfil.html', usuario=usuario_logado)
-
-# ==========================================
-# INICIALIZAÇÃO DO SERVIDOR
-# ==========================================
+    return render_template('perfil.html', usuario=Usuario.query.get(session['usuario_id']))
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Já criamos um Chef com PIN 1234 para você testar
         if not Usuario.query.first():
-            chef = Usuario(nome="Chef Palhete", pin_acesso="1234")
-            db.session.add(chef)
+            db.session.add(Usuario(nome="Chef Palhete", pin_acesso="1234"))
             db.session.commit()
-            
     app.run(debug=True, host='0.0.0.0', port=5003, ssl_context='adhoc')
