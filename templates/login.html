@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-[80vh] px-2">
+    
+    <div class="bg-primary text-on-primary w-28 h-28 rounded-full flex items-center justify-center shadow-lg mb-6">
+        <span class="material-symbols-outlined text-6xl">local_pizza</span>
+    </div>
+
+    <h2 class="text-3xl font-extrabold text-on-surface mb-1 text-center">Estoque Palhete</h2>
+    <p class="text-on-surface-variant font-medium mb-10 text-center">Digite seu PIN para acessar o sistema.</p>
+
+    {% if erro %}
+    <div class="bg-primary-fixed text-on-primary-fixed-variant p-4 rounded-2xl mb-6 w-full text-center font-bold border border-red-200">
+        {{ erro }}
+    </div>
+    {% endif %}
+
+    <form action="/login" method="POST" class="w-full flex flex-col gap-4 max-w-sm">
+        
+        <input type="password" name="pin" pattern="[0-9]*" inputmode="numeric" required placeholder="****" maxlength="4" class="w-full bg-surface-container-highest border-none rounded-3xl py-6 px-5 focus:ring-4 focus:ring-primary-fixed text-center text-4xl tracking-[1em] outline-none font-bold text-on-surface">
+
+        <button type="submit" class="w-full bg-primary text-on-primary py-5 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 mt-4 active:scale-95 transition-transform text-xl">
+            <span class="material-symbols-outlined">login</span>
+            Acessar
+        </button>
+        
+    </form>
+</div>
+{% endblock %}

@@ -37,6 +37,7 @@
 </head>
 <body class="text-on-surface antialiased min-h-screen relative pb-32">
 
+    {% if request.endpoint != 'login' %}
     <header class="bg-surface sticky top-0 z-10 px-4 py-4 flex items-center justify-between shadow-sm">
         <div class="flex items-center gap-3">
             <button class="text-primary active:scale-95 transition-transform flex items-center justify-center">
@@ -48,37 +49,35 @@
             <span class="material-symbols-outlined text-3xl">search</span>
         </button>
     </header>
+    {% endif %}
 
     <main class="px-4 pt-4 pb-6 max-w-5xl mx-auto">
         {% block content %}
         {% endblock %}
     </main>
 
+    {% if request.endpoint != 'login' %}
     <nav class="bg-surface fixed bottom-0 left-0 w-full border-t border-surface-container-high pt-3 pb-6 px-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
         <div class="flex justify-around items-center max-w-5xl mx-auto">
-            
             <a href="/" class="flex flex-col items-center justify-center gap-1 w-20 {% if request.path == '/' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
                 <span class="material-symbols-outlined text-2xl cursor-pointer">dashboard</span>
                 <span class="text-xs font-bold cursor-pointer">Início</span>
             </a>
-            
             <a href="/estoque" class="flex flex-col items-center justify-center gap-1 w-20 {% if request.path == '/estoque' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
                 <span class="material-symbols-outlined text-2xl cursor-pointer">inventory_2</span>
                 <span class="text-xs font-bold cursor-pointer">Estoque</span>
             </a>
-            
             <a href="/historico" class="flex flex-col items-center justify-center gap-1 w-20 {% if request.path == '/historico' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
                 <span class="material-symbols-outlined text-2xl cursor-pointer">sync_alt</span>
                 <span class="text-xs font-bold cursor-pointer">Movimentar</span>
             </a>
-            
             <a href="/perfil" class="flex flex-col items-center justify-center gap-1 w-20 {% if request.path == '/perfil' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
                 <span class="material-symbols-outlined text-2xl cursor-pointer">person</span>
                 <span class="text-xs font-bold cursor-pointer">Perfil</span>
             </a>
-            
         </div>
     </nav>
+    {% endif %}
 
 </body>
 </html>
