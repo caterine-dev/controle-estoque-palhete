@@ -2,8 +2,8 @@
 
 {% block content %}
 <div class="mb-8 mt-2">
-    <h2 class="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Olá, Equipe Palhete</h2>
-    <p class="text-on-surface-variant font-medium mt-1">O estoque está pronto para o turno.</p>
+    <h2 class="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Olá, {{ session['usuario_nome'] }}</h2>
+    <p class="text-on-surface-variant font-medium mt-1">O estoque está pronto para o seu turno.</p>
 </div>
 
 <div class="grid grid-cols-2 gap-4 mb-8">
