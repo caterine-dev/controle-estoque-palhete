@@ -53,3 +53,33 @@ CT02 - Quebra de Lote (Teste PEPS): Funcionário retira uma quantidade maior do 
 CT03 - Estoque Insuficiente: Funcionário tenta retirar mais itens do que a soma de todos os lotes disponíveis. O sistema bloqueia a ação e exibe alerta de erro.
 
 CT04 - Devolução de Retirada: Funcionário acessa o histórico e devolve 1 unidade recém-retirada. O sistema soma 1 unidade de volta à quantidade_atual do lote exato de onde o item saiu, registrando o tipo de movimentação como "Devolução".
+
+---
+
+## 🛠️ Manual de Resolução de Problemas (Troubleshooting)
+
+Este guia documenta os cenários mais comuns no ambiente de produção (Cozinha da Pizzaria) e suas respectivas soluções.
+
+### 1. O "Gargalo" da Cozinha (Erro: `Database is locked`)
+* **O Cenário:** Ocorre durante picos de movimento se dois usuários tentarem registrar movimentações no exato mesmo milissegundo.
+* **A Causa:** Limitação de concorrência do banco de dados SQLite (que utiliza um único arquivo local).
+* **A Solução:** Instruir a equipe a aguardar 2 segundos, atualizar a página e refazer o registro. (Solução técnica futura: migração para banco de dados MySQL).
+
+### 2. A Câmera Cega (Leitor de Código de Barras não abre)
+* **O Cenário:** A tela da câmera fica preta ou o sistema não solicita permissão ao clicar em "Vincular Código".
+* **A Causa:** Bloqueio de segurança do navegador nativo do celular (falta de protocolo HTTPS ou permissão negada acidentalmente pelo usuário).
+* **A Solução:** 1. Certificar-se de acessar pelo link seguro oficial: `https://estoquepalhete.pythonanywhere.com`.
+  2. Acessar as "Configurações de Permissão de Site" no navegador do celular e alterar o uso da Câmera para "Permitido".
+
+### 3. A "Batida de Cabeça" do Git (Erro no `git pull` no servidor)
+* **O Cenário:** O servidor rejeita a atualização do código com mensagens de *Merge Conflict* ou exigindo *commit/stash*.
+* **A Causa:** O código foi editado diretamente no painel do PythonAnywhere, gerando conflito com a versão vinda do GitHub.
+* **A Solução:** Nunca editar o código diretamente no servidor de produção. Para forçar o servidor a aceitar a versão do GitHub, execute no Bash do PythonAnywhere:
+  ```bash
+  git reset --hard origin/main
+  git pull
+  ```
+
+### 4. O Apagão de Memória (Colaborador esqueceu o PIN)
+* **O Cenário:** Impedimento de acesso à plataforma por esquecimento da credencial de 4 dígitos.
+* **A Solução:** O gerente (perfil principal) deve acessar `Perfil > Gerenciar Equipa`, excluir o colaborador que perdeu o acesso e criar um novo perfil para o mesmo instantaneamente.
