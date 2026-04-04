@@ -50,23 +50,29 @@
     </main>
 
     {% if request.endpoint != 'login' %}
-    <nav class="bg-surface fixed bottom-0 left-0 w-full border-t border-surface-container-high pt-3 pb-6 px-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
-        <div class="flex justify-around items-center max-w-5xl mx-auto">
-            <a href="/" class="flex flex-col items-center justify-center gap-1 w-20 {% if request.path == '/' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
-                <span class="material-symbols-outlined text-2xl cursor-pointer">dashboard</span>
-                <span class="text-xs font-bold cursor-pointer">Início</span>
+    <nav class="bg-surface fixed bottom-0 left-0 w-full border-t border-surface-container-high pt-3 pb-6 px-1 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
+        <div class="flex justify-between items-center max-w-5xl mx-auto px-2">
+            <a href="/" class="flex flex-col items-center justify-center gap-1 w-[18%] {% if request.path == '/' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
+                <span class="material-symbols-outlined text-[26px] cursor-pointer">dashboard</span>
+                <span class="text-[10px] font-bold cursor-pointer">Início</span>
             </a>
-            <a href="/estoque" class="flex flex-col items-center justify-center gap-1 w-20 {% if request.path == '/estoque' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
-                <span class="material-symbols-outlined text-2xl cursor-pointer">inventory_2</span>
-                <span class="text-xs font-bold cursor-pointer">Estoque</span>
+            <a href="/estoque" class="flex flex-col items-center justify-center gap-1 w-[18%] {% if request.path == '/estoque' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
+                <span class="material-symbols-outlined text-[26px] cursor-pointer">inventory_2</span>
+                <span class="text-[10px] font-bold cursor-pointer">Estoque</span>
             </a>
-            <a href="/historico" class="flex flex-col items-center justify-center gap-1 w-20 {% if request.path == '/historico' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
-                <span class="material-symbols-outlined text-2xl cursor-pointer">sync_alt</span>
-                <span class="text-xs font-bold cursor-pointer">Movimentar</span>
+            <a href="/historico" class="flex flex-col items-center justify-center gap-1 w-[18%] {% if request.path == '/historico' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
+                <span class="material-symbols-outlined text-[26px] cursor-pointer">sync_alt</span>
+                <span class="text-[10px] font-bold cursor-pointer">Mover</span>
             </a>
-            <a href="/perfil" class="flex flex-col items-center justify-center gap-1 w-20 {% if request.path == '/perfil' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
-                <span class="material-symbols-outlined text-2xl cursor-pointer">person</span>
-                <span class="text-xs font-bold cursor-pointer">Perfil</span>
+            
+            <a href="/lista-compras" class="flex flex-col items-center justify-center gap-1 w-[18%] {% if request.path == '/lista-compras' or request.path == '/historico-compras' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
+                <span class="material-symbols-outlined text-[26px] cursor-pointer">shopping_cart</span>
+                <span class="text-[10px] font-bold cursor-pointer">Compras</span>
+            </a>
+            
+            <a href="/perfil" class="flex flex-col items-center justify-center gap-1 w-[18%] {% if request.path == '/perfil' %}text-primary{% else %}text-on-surface-variant{% endif %} no-underline active:scale-95 transition-transform cursor-pointer">
+                <span class="material-symbols-outlined text-[26px] cursor-pointer">person</span>
+                <span class="text-[10px] font-bold cursor-pointer">Perfil</span>
             </a>
         </div>
     </nav>

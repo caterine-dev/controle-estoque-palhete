@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-8 mt-2 flex justify-between items-start">
+    <div>
+        <h2 class="text-2xl font-extrabold text-on-surface">Lista de Compras</h2>
+        <p class="text-on-surface-variant font-medium text-sm mt-1">Itens automáticos e pedidos avulsos.</p>
+    </div>
+    <a href="/historico-compras" class="bg-surface-container-highest text-on-surface p-2 rounded-xl flex items-center justify-center active:scale-95 transition-transform" title="Ver Histórico">
+        <span class="material-symbols-outlined">history</span>
+    </a>
+</div>
+
+<form action="/finalizar-compra" method="POST">
+    <div class="mb-6">
+        <h3 class="text-sm font-bold text-primary uppercase tracking-wider mb-3">Sugestões (Estoque Baixo)</h3>
+        <div class="flex flex-col gap-3">
+            {% for s in sugestoes %}
+            <label class="bg-surface-container-lowest p-4 rounded-2xl flex items-center gap-4 border border-outline-variant cursor-pointer">
+                <input type="checkbox" name="sugeridos" value="{{ s.id }}" checked class="w-5 h-5 accent-primary">
+                <div class="flex-1">
+                    <h4 class="font-bold">{{ s.nome }}</h4>
+                    <p class="text-sm text-on-surface-variant italic">Repor: {{ s.falta }} {{ s.unidade }}</p>
+                </div>
+            </label>
+            {% else %}
+            <p class="text-sm text-on-surface-variant">Tudo em dia! Sem sugestões automáticas.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold text-secondary uppercase tracking-wider">Itens Extras (Manuais)</h3>
+            <a href="/limpar-lista-manual" class="text-xs font-bold text-red-600">Limpar Tudo</a>
+        </div>
+        <div class="flex flex-col gap-3">
+            {% for im in itens_manuais %}
+            <div class="bg-secondary-container p-4 rounded-2xl flex justify-between items-center group">
+                <div class="flex flex-col">
+                    <span class="font-bold text-on-secondary-container">{{ im.nome }}</span>
+                    <span class="text-xs font-medium text-secondary opacity-80">{{ im.quantidade }} {{ im.unidade }}</span>
+                </div>
+                
+                <a href="{{ url_for('remover_item_manual', index=loop.index0) }}" class="text-red-700 bg-white/50 p-2 rounded-full flex items-center justify-center active:scale-90 transition-transform no-underline">
+                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                </a>
+            </div>
+            {% endfor %}
+            
+            <button type="button" onclick="document.getElementById('modal-manual').classList.toggle('hidden')" class="border-2 border-dashed border-outline p-4 rounded-2xl text-on-surface-variant font-bold flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">add_circle</span> Adicionar Produto Extra
+            </button>
+        </div>
+    </div>
+
+    <button type="submit" class="fixed bottom-24 right-4 bg-primary text-on-primary p-4 rounded-full shadow-2xl flex items-center gap-2 font-bold z-40 active:scale-95 transition-transform">
+        <span class="material-symbols-outlined">send_and_archive</span> Finalizar e Enviar
+    </button>
+</form>
+
+<div id="modal-manual" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-surface w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+        <h3 class="text-xl font-bold mb-4">Novo Item Extra</h3>
+        <form action="/adicionar-item-manual" method="POST" class="flex flex-col gap-4">
+            <input type="text" name="nome" placeholder="Nome do produto (ex: Detergente)" required class="w-full p-4 bg-surface-container rounded-xl outline-none">
+            <div class="flex gap-2">
+                <input type="number" step="0.01" name="quantidade" placeholder="Qtd" required class="w-1/2 p-4 bg-surface-container rounded-xl outline-none">
+                <select name="unidade" class="w-1/2 p-4 bg-surface-container rounded-xl outline-none">
+                    <option>UNID</option><option>KG</option><option>LITRO</option><option>CAIXA</option>
+                </select>
+            </div>
+            <div class="flex gap-2 mt-2">
+                <button type="button" onclick="document.getElementById('modal-manual').classList.add('hidden')" class="flex-1 p-4 font-bold text-on-surface-variant">Cancelar</button>
+                <button type="submit" class="flex-1 bg-secondary text-on-secondary p-4 rounded-xl font-bold">Adicionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

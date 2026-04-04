@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    @media print {
+        .no-print, nav { display: none !important; }
+        body { background-color: white; color: black; }
+        .bg-surface-container-lowest { border: 1px solid #ccc; break-inside: avoid; box-shadow: none; }
+    }
+</style>
+
+<div class="mb-6 mt-2 flex justify-between items-start no-print">
+    <div class="flex items-center gap-3">
+        <a href="/lista-compras" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline cursor-pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-2xl font-extrabold text-on-surface">Histórico de Compras</h2>
+            <p class="text-on-surface-variant font-medium text-sm mt-1">Controle de tudo o que foi solicitado.</p>
+        </div>
+    </div>
+</div>
+
+<div class="hidden print:block mb-8 text-center">
+    <h1 class="text-3xl font-extrabold text-black">Relatório de Compras - Palhete Pizzaria</h1>
+    <p class="text-gray-600">Gerado em: <script>document.write(new Date().toLocaleDateString('pt-BR'))</script></p>
+    <hr class="mt-4 border-gray-300">
+</div>
+
+{% if compras %}
+<div class="mb-8 p-4 bg-red-50 border border-red-200 rounded-3xl no-print shadow-sm">
+    <h3 class="font-bold text-red-800 mb-1 flex items-center gap-2">
+        <span class="material-symbols-outlined">lock_open</span> Encerramento de Ciclo
+    </h3>
+    <p class="text-sm text-red-700 mb-4 font-medium">Para limpar o sistema, você deve primeiro gerar o arquivo PDF de segurança.</p>
+    
+    <div class="flex gap-2">
+        <button onclick="gerarPDF()" class="flex-1 bg-secondary text-on-secondary p-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
+            <span class="material-symbols-outlined">picture_as_pdf</span> 1. Gerar PDF
+        </button>
+        
+        <form action="/limpar-historico-compras" method="POST" class="flex-1 flex" onsubmit="return confirm('Tem certeza que deseja apagar todo o histórico? Certifique-se de ter salvo o PDF.');">
+            <button type="submit" id="btn-limpar" disabled class="w-full bg-red-600 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 opacity-50 cursor-not-allowed transition-all">
+                <span class="material-symbols-outlined">delete_sweep</span> 2. Limpar
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="flex flex-col gap-6 mb-8">
+    {% for compra in compras %}
+    <div class="bg-surface-container-lowest p-5 rounded-3xl border border-surface-container-highest shadow-sm">
+        <div class="flex justify-between items-center mb-4 border-b border-surface-container-highest pb-3">
+            <div class="flex items-center gap-2 text-primary print:text-black">
+                <span class="material-symbols-outlined">calendar_month</span>
+                <span class="font-extrabold">{{ compra.data_envio.strftime('%d/%m/%Y às %H:%M') }}</span>
+            </div>
+            <div class="bg-surface-container py-1 px-3 rounded-full text-xs font-bold text-on-surface-variant flex items-center gap-1 print:border print:border-gray-300">
+                <span class="material-symbols-outlined text-[16px]">person</span>
+                {{ compra.usuario.nome }}
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            {% for item in compra.itens %}
+            <div class="flex justify-between items-center bg-surface-container-low print:bg-white p-3 rounded-xl">
+                <div class="flex items-center gap-3">
+                    {% if item.tipo == 'Sugestão' %}
+                    <span class="material-symbols-outlined text-secondary print:text-gray-500">smart_toy</span>
+                    {% else %}
+                    <span class="material-symbols-outlined text-tertiary print:text-gray-500">pan_tool</span>
+                    {% endif %}
+                    <span class="font-bold text-on-surface">{{ item.nome }}</span>
+                </div>
+                <span class="font-black text-on-surface">{{ item.quantidade_pedida }} {{ item.unidade }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="p-8 text-center bg-surface-container-lowest rounded-2xl border border-dashed border-outline">
+        <p class="text-on-surface-variant font-semibold">O histórico está vazio e pronto para o novo ciclo.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    function gerarPDF() {
+        // 1. Abre a tela de impressão/PDF do aparelho
+        window.print();
+        
+        // 2. Tira o bloqueio do botão de limpar
+        const btnLimpar = document.getElementById('btn-limpar');
+        btnLimpar.disabled = false;
+        
+        // 3. Muda a cor do botão para mostrar que ele "acordou"
+        btnLimpar.classList.remove('opacity-50', 'cursor-not-allowed');
+        btnLimpar.classList.add('active:scale-95', 'hover:bg-red-700');
+    }
+</script>
+{% endblock %}
