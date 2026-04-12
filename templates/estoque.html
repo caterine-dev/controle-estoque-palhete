@@ -1,52 +1,63 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="mb-8 mt-2">
-    <div class="flex items-center gap-3 mb-2">
-        <a href="/" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </a>
-        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Estoque Atual</h2>
+<div class="mb-8 mt-2 flex justify-between items-center">
+    <div>
+        <h2 class="text-2xl font-extrabold text-on-surface">Estoque Atual</h2>
+        <p class="text-on-surface-variant font-medium mt-1">Saldo e validades ativas.</p>
     </div>
-    <p class="text-on-surface-variant font-medium mt-1">Gerencie todos os itens cadastrados no seu sistema.</p>
+    <a href="/cadastro-produto" class="bg-primary text-on-primary p-3 rounded-xl flex items-center justify-center shadow-md active:scale-95 transition-transform" title="Novo Produto">
+        <span class="material-symbols-outlined">add</span>
+    </a>
 </div>
 
-<div class="flex flex-col gap-4">
-    {% for produto in produtos %}
-    <div class="bg-surface-container-lowest p-5 rounded-2xl flex flex-col gap-4 shadow-sm border border-surface-container-highest">
-        
-        <div class="flex justify-between items-start">
-            <div>
-                <h4 class="font-bold text-on-surface text-lg">{{ produto.nome }}</h4>
-                <p class="text-sm text-on-surface-variant mt-1">
-                    Estoque Mínimo: <span class="font-bold">{{ produto.minimo }} {{ produto.unidade }}</span>
-                </p>
+<div class="flex flex-col gap-4 mb-8">
+    {% for p in produtos %}
+    <details class="group bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-sm overflow-hidden open:border-primary transition-all">
+        <summary class="flex justify-between items-center p-4 cursor-pointer list-none active:bg-surface-container-low transition-colors">
+            <div class="flex flex-col">
+                <span class="font-extrabold text-lg text-on-surface group-open:text-primary transition-colors">{{ p.nome }}</span>
+                <span class="text-xs font-bold {% if p.saldo < p.minimo %}text-red-600{% else %}text-on-surface-variant{% endif %}">
+                    Mínimo: {{ p.minimo }} {{ p.unidade }}
+                </span>
             </div>
-            <div class="{% if produto.saldo < produto.minimo and produto.minimo > 0 %}bg-primary-fixed text-on-primary-fixed-variant{% else %}bg-secondary-container text-on-secondary-container{% endif %} px-4 py-2 rounded-xl font-bold text-sm shadow-sm">
-                {{ produto.saldo }} {{ produto.unidade }}
+            <div class="flex items-center gap-3">
+                <div class="flex flex-col items-end">
+                    <span class="font-black text-xl text-on-surface">{{ p.saldo }}</span>
+                    <span class="text-[10px] uppercase font-bold text-on-surface-variant">{{ p.unidade }}</span>
+                </div>
+                <span class="material-symbols-outlined text-outline group-open:rotate-180 transition-transform">expand_more</span>
             </div>
-        </div>
-
-        <hr class="border-outline-variant opacity-50">
+        </summary>
         
-        <div class="flex gap-2 justify-end">
-            <a href="/editar-produto/{{ produto.id }}" class="bg-surface-container-high text-on-surface p-3 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-transform no-underline gap-2">
-                <span class="material-symbols-outlined text-xl">edit</span>
-                <span class="text-sm font-bold">Editar</span>
-            </a>
+        <div class="px-4 pb-4 pt-2 border-t border-surface-container-low bg-surface-container-lowest/50">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Lotes Físicos</span>
+                <div class="flex gap-2">
+                    <a href="/editar-produto/{{ p.id }}" class="text-secondary bg-secondary-container px-3 py-1 rounded-full text-xs font-bold no-underline">Editar</a>
+                    <form action="/excluir-produto/{{ p.id }}" method="POST" onsubmit="return confirm('Apagar este produto excluirá todo o histórico dele. Tem certeza?');">
+                        <button type="submit" class="text-red-700 bg-red-100 px-3 py-1 rounded-full text-xs font-bold">Apagar</button>
+                    </form>
+                </div>
+            </div>
             
-            <form action="/excluir-produto/{{ produto.id }}" method="POST" onsubmit="return confirm('ATENÇÃO: Tem certeza que deseja apagar o produto {{ produto.nome }}? ISSO VAI APAGAR TODO O HISTÓRICO DELE NO SISTEMA.');">
-                <button type="submit" class="bg-primary text-on-primary p-3 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-transform gap-2">
-                    <span class="material-symbols-outlined text-xl">delete</span>
-                </button>
-            </form>
+            <div class="flex flex-col gap-2">
+                {% for lote in p.lotes %}
+                <div class="flex justify-between items-center bg-surface p-3 rounded-xl border border-surface-container">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-tertiary text-[18px]">event</span>
+                        <span class="text-sm font-bold text-on-surface">Vence em {{ lote.data_validade.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    <span class="font-black text-sm text-tertiary">{{ lote.quantidade_atual }} {{ p.unidade }}</span>
+                </div>
+                {% else %}
+                <div class="text-center py-2">
+                    <span class="text-xs text-on-surface-variant italic">Nenhum produto no estoque físico no momento.</span>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-
-    </div>
-    {% else %}
-    <div class="p-8 text-center bg-surface-container-lowest rounded-2xl border border-dashed border-outline">
-        <p class="text-on-surface-variant font-semibold">Nenhum produto cadastrado ainda.</p>
-    </div>
+    </details>
     {% endfor %}
 </div>
 {% endblock %}

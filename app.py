@@ -151,7 +151,18 @@ def cadastro_produto():
 def ver_estoque():
     produtos = []
     for p in Produto.query.all():
-        produtos.append({'id': p.id, 'nome': p.nome, 'unidade': p.unidade_medida, 'minimo': p.estoque_minimo, 'saldo': sum(l.quantidade_atual for l in p.lotes if l.quantidade_atual > 0)})
+        # Pega só os lotes que ainda tem produto e ordena do mais velho pro mais novo
+        lotes_ativos = [l for l in p.lotes if l.quantidade_atual > 0]
+        lotes_ativos.sort(key=lambda x: x.data_validade)
+        
+        produtos.append({
+            'id': p.id, 
+            'nome': p.nome, 
+            'unidade': p.unidade_medida, 
+            'minimo': p.estoque_minimo, 
+            'saldo': sum(l.quantidade_atual for l in lotes_ativos),
+            'lotes': lotes_ativos # MANDANDO OS LOTES PARA A TELA
+        })
     return render_template('estoque.html', produtos=produtos)
 
 @app.route('/editar-produto/<int:id>', methods=['GET', 'POST'])
