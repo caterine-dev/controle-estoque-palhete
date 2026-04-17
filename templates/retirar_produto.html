@@ -1,108 +1,93 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="mb-8 mt-2">
-    <div class="flex items-center gap-3 mb-2">
-        <a href="/" class="text-red-700 bg-red-50 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
+<div class="mb-8 mt-2 flex justify-between items-start">
+    <div class="flex items-center gap-3">
+        <a href="/" class="text-secondary bg-secondary-container p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center no-underline">
             <span class="material-symbols-outlined">arrow_back</span>
         </a>
-        <h2 class="text-2xl font-extrabold font-['Plus_Jakarta_Sans'] text-on-surface">Uso na Cozinha</h2>
-    </div>
-    <p class="text-on-surface-variant font-medium mt-1">Registre a saída de ingredientes lendo o código de barras.</p>
-</div>
-
-<form method="POST" action="/retirar-produto" class="flex flex-col gap-6">
-    
-    <div class="flex flex-col gap-2">
-        <label class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Ingrediente Utilizado</label>
-        <div class="flex gap-2">
-            <select id="produto_id" name="produto_id" required class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none appearance-none">
-                <option value="" disabled selected>Selecione ou escaneie...</option>
-                {% for produto in produtos %}
-                    <option value="{{ produto.id }}">{{ produto.nome }}</option>
-                {% endfor %}
-            </select>
-            
-            <button type="button" id="btn-camera" class="bg-primary-fixed text-on-primary-fixed-variant px-5 rounded-2xl flex items-center justify-center shadow-sm active:scale-95 transition-transform">
-                <span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
-            </button>
+        <div>
+            <h2 class="text-2xl font-extrabold text-on-surface">Retirar Produto</h2>
+            <p class="text-on-surface-variant font-medium text-sm mt-1">Registre a saída para consumo da cozinha.</p>
         </div>
     </div>
+</div>
 
-    <div id="reader-container" class="w-full rounded-2xl overflow-hidden hidden border-2 border-primary mt-2 shadow-sm">
-        <div id="reader" class="w-full"></div>
+<form action="/retirar-produto" method="POST" class="flex flex-col gap-5">
+    
+    <div>
+        <label class="block text-sm font-bold text-on-surface-variant mb-2 uppercase tracking-wider">Selecione o Produto</label>
+        <select name="produto_id" id="produto_select" class="w-full p-4 bg-surface-container rounded-2xl outline-none border border-transparent focus:border-primary transition-colors text-lg font-semibold" required onchange="atualizarInfoLote()">
+            <option value="" disabled selected>Toque para escolher...</option>
+            {% for p in produtos %}
+            <option value="{{ p.id }}">{{ p.nome }}</option>
+            {% endfor %}
+        </select>
     </div>
 
-    <div class="flex flex-col gap-2">
-        <label for="quantidade" class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Quantidade Retirada</label>
-        <input type="number" step="0.1" id="quantidade" name="quantidade" required placeholder="Ex: 1.5" class="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-primary-fixed text-on-surface outline-none text-center text-2xl font-bold">
+    <div id="box-info-lote" class="hidden bg-tertiary-container text-on-tertiary-container p-4 rounded-2xl border border-tertiary/20 flex flex-col gap-1 shadow-sm">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-tertiary">event_available</span>
+            <span class="font-bold text-sm uppercase tracking-wider">Atenção! Pegue o lote de: <span id="txt-validade" class="text-base font-black text-tertiary"></span></span>
+        </div>
+        <p class="text-sm font-medium opacity-80 pl-8 mt-1">Restam neste lote: <span id="txt-qtd" class="font-bold"></span></p>
     </div>
 
-    <div class="flex flex-col gap-3">
-        <label class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Destino do Uso</label>
-        <label class="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between border border-transparent has-[:checked]:bg-secondary-container has-[:checked]:border-secondary cursor-pointer transition-all">
-            <div class="flex items-center gap-3">
-                <div class="bg-secondary text-on-secondary w-10 h-10 rounded-full flex items-center justify-center">
-                    <span class="material-symbols-outlined">restaurant</span>
-                </div>
-                <span class="font-bold text-on-surface">Produção do Dia</span>
-            </div>
-            <input type="radio" name="destino" value="producao" checked class="w-5 h-5 text-secondary focus:ring-secondary">
-        </label>
-        <label class="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between border border-transparent has-[:checked]:bg-primary-fixed has-[:checked]:border-primary cursor-pointer transition-all">
-            <div class="flex items-center gap-3">
-                <div class="bg-primary text-on-primary w-10 h-10 rounded-full flex items-center justify-center">
-                    <span class="material-symbols-outlined">delete</span>
-                </div>
-                <span class="font-bold text-on-surface">Desperdício / Avaria</span>
-            </div>
-            <input type="radio" name="destino" value="avaria" class="w-5 h-5 text-primary focus:ring-primary">
-        </label>
+    <div id="box-sem-estoque" class="hidden bg-red-50 text-red-700 p-4 rounded-2xl border border-red-200 flex items-center gap-2 shadow-sm">
+        <span class="material-symbols-outlined">error</span>
+        <span class="font-bold text-sm">Atenção: Este produto consta como ZERADO no sistema.</span>
     </div>
 
-    <button type="submit" class="w-full bg-primary text-on-primary p-4 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 mt-4 active:scale-95 transition-transform">
-        <span class="material-symbols-outlined">outbox</span>
-        Confirmar Retirada
+    <div>
+        <label class="block text-sm font-bold text-on-surface-variant mb-2 uppercase tracking-wider">Quantidade Retirada</label>
+        <input type="number" step="0.01" name="quantidade" id="input-qtd" placeholder="Ex: 2" required class="w-full p-4 bg-surface-container rounded-2xl outline-none border border-transparent focus:border-primary transition-colors text-lg font-semibold">
+    </div>
+
+    <button type="submit" id="btn-salvar" class="mt-4 bg-primary text-on-primary p-4 rounded-full font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg">
+        <span class="material-symbols-outlined">pan_tool</span> Registrar Baixa
     </button>
 </form>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-    const btnCamera = document.getElementById('btn-camera');
-    const readerContainer = document.getElementById('reader-container');
-    const selectProduto = document.getElementById('produto_id');
-    const mapaCodigos = {{ mapa_codigos | tojson }};
-    let html5QrCode;
+    // O Jinja injeta o dicionário Python direto para o Javascript ler
+    const infoLotes = {{ info_lotes | tojson | safe }};
 
-    btnCamera.addEventListener('click', () => {
-        if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.stop().then(() => { readerContainer.classList.add('hidden'); });
-            return;
+    function atualizarInfoLote() {
+        const select = document.getElementById('produto_select');
+        const produtoId = select.value;
+        
+        const boxInfo = document.getElementById('box-info-lote');
+        const boxSemEstoque = document.getElementById('box-sem-estoque');
+        const txtValidade = document.getElementById('txt-validade');
+        const txtQtd = document.getElementById('txt-qtd');
+        const btnSalvar = document.getElementById('btn-salvar');
+        const inputQtd = document.getElementById('input-qtd');
+
+        // Esconde as mensagens sempre que trocar
+        boxInfo.classList.add('hidden');
+        boxSemEstoque.classList.add('hidden');
+
+        if (produtoId && infoLotes[produtoId]) {
+            // Se o produto existe e tem estoque físico
+            const info = infoLotes[produtoId];
+            txtValidade.textContent = info.validade;
+            txtQtd.textContent = info.qtd_disponivel + ' ' + info.unidade;
+            boxInfo.classList.remove('hidden');
+            
+            // Garante que o botão está liberado
+            btnSalvar.disabled = false;
+            btnSalvar.classList.remove('opacity-50', 'cursor-not-allowed');
+            inputQtd.disabled = false;
+
+        } else if (produtoId) {
+            // Se selecionou o produto, mas ele está zerado no sistema
+            boxSemEstoque.classList.remove('hidden');
+            
+            // Trava o formulário para evitar erro
+            btnSalvar.disabled = true;
+            btnSalvar.classList.add('opacity-50', 'cursor-not-allowed');
+            inputQtd.disabled = true;
         }
-
-        readerContainer.classList.remove('hidden');
-        html5QrCode = new Html5Qrcode("reader");
-
-        // Abre a câmera traseira direto
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 150 } },
-            (decodedText) => {
-                html5QrCode.stop().then(() => {
-                    readerContainer.classList.add('hidden');
-                    const prodId = mapaCodigos[decodedText];
-                    
-                    if (prodId) {
-                        selectProduto.value = prodId;
-                        selectProduto.classList.add('ring-4', 'ring-green-400');
-                        setTimeout(() => selectProduto.classList.remove('ring-4', 'ring-green-400'), 1500);
-                    } else {
-                        alert("Código não reconhecido. Cadastre-o primeiro em 'Vincular Código'.");
-                    }
-                });
-            },
-            (errorMessage) => { /* Ignora erros de foco */ }
-        ).catch((err) => { alert("Erro ao abrir câmera. Tente recarregar a página."); });
-    });
+    }
 </script>
 {% endblock %}

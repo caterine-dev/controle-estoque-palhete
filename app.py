@@ -197,6 +197,7 @@ def entrada_lote():
     return render_template('entrada_lote.html', produtos=Produto.query.all(), mapa_codigos={cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()})
 
 @app.route('/retirar-produto', methods=['GET', 'POST'])
+@app.route('/retirar-produto', methods=['GET', 'POST'])
 def retirar_produto():
     if request.method == 'POST':
         qtd = float(request.form['quantidade'])
@@ -209,7 +210,26 @@ def retirar_produto():
             db.session.add(Movimentacao(lote_id=l.id, usuario_id=session['usuario_id'], tipo_movimentacao='Saída', quantidade=baixa))
         db.session.commit()
         return redirect(url_for('index'))
-    return render_template('retirar_produto.html', produtos=Produto.query.all(), mapa_codigos={cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()})
+    
+    produtos = Produto.query.all()
+    
+    # Cria um dicionário com o próximo lote a vencer de cada produto
+    info_lotes = {}
+    for p in produtos:
+        proximo_lote = LoteEstoque.query.filter_by(produto_id=p.id).filter(LoteEstoque.quantidade_atual > 0).order_by(LoteEstoque.data_validade).first()
+        if proximo_lote:
+            info_lotes[p.id] = {
+                'validade': proximo_lote.data_validade.strftime('%d/%m/%Y'),
+                'qtd_disponivel': proximo_lote.quantidade_atual,
+                'unidade': p.unidade_medida
+            }
+        else:
+            info_lotes[p.id] = None # Sem estoque físico
+
+    return render_template('retirar_produto.html', 
+                           produtos=produtos, 
+                           mapa_codigos={cb.codigo: cb.produto_id for cb in CodigoBarras.query.all()},
+                           info_lotes=info_lotes) # Enviamos o dicionário para a tela
 
 @app.route('/historico')
 def historico():
